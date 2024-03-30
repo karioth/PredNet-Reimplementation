@@ -21,16 +21,16 @@ class PredNetModel(models.Model):
                     stack_sizes, R_stack_sizes, A_filt_sizes, Ahat_filt_sizes, R_filt_sizes)] # initialize the cells according to the hyperparameters.
 
         # self.nb_layers = len(stack_sizes)
-        # self.layer_loss_weights = layer_loss_weights # weighting for each layer in final loss.
-        # self.time_loss_weights = time_loss_weights # weighting for the timesteps in final loss.
+        self.layer_loss_weights = layer_loss_weights # weighting for each layer in final loss.
+        self.time_loss_weights = time_loss_weights # weighting for the timesteps in final loss.
 
         #PredNet architecture
         self.prednet = PredNet(cell = self.cells, return_sequences = True) # pass the cells to the PredNet(RNN) class
 
         #Layers for additional error computations for weighted loss during traning
-        self.timeDense = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1, trainable=False), weights=[layer_loss_weights, np.zeros(1)], trainable=False)
+        self.timeDense = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1, trainable=False), weights=[self.layer_loss_weights, np.zeros(1)], trainable=False)
         self.flatten =  tf.keras.layers.Flatten()
-        self.dense = tf.keras.layers.Dense(1, weights=[time_loss_weights, np.zeros(1)], trainable=False)
+        self.dense = tf.keras.layers.Dense(1, weights=[self.time_loss_weights, np.zeros(1)], trainable=False)
 
         # self.optimizer = tf.keras.optimizers.Adam()
         # self.mae_loss = tf.keras.losses.MeanAbsoluteError()
@@ -75,3 +75,17 @@ class PredNetModel(models.Model):
           self.metric_loss.update_state(val_loss)
 
         return self.metric_loss.result()
+    
+    def get_config(self):
+        cell_configs = [cell.get_config() for cell in self.cells]
+        config = super(PredNetModel, self).get_config()
+        config.update({
+            'cells': cell_configs,  # Store the configurations of the cells
+            'layer_loss_weights': self.layer_loss_weights,
+            'time_loss_weights': self.time_loss_weights,
+        })
+    def from_config(self):
+        cells = [PredNet_Cell.from_config(**cell_config) for cell_config in config['cells']]
+        return cls(cells, **config)
+        
+        
