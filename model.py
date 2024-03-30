@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../")
+
 from PredNet import *
 import tensorflow as tf
 import os
