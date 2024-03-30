@@ -35,7 +35,7 @@ class PredNetModel(models.Model):
         # self.optimizer = tf.keras.optimizers.Adam()
         # self.mae_loss = tf.keras.losses.MeanAbsoluteError()
 
-        # self.metric_loss = tf.keras.metrics.Mean(name="loss")
+        self.metric_loss = tf.keras.metrics.Mean(name="loss")
 
     @tf.function
     def call(self, input, training=False):
