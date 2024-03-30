@@ -6,7 +6,7 @@ from tensorflow.keras import models
 
 # PredNet model definition
 class PredNetModel(models.Model):
-''' Puts together a classical version of the PredNet architecture using the modern modular implementation'''
+    ''' Puts together a classical version of the PredNet architecture using the modern modular implementation'''
     def __init__(self, stack_sizes, R_stack_sizes, A_filt_sizes, Ahat_filt_sizes, R_filt_sizes, layer_loss_weights, time_loss_weights,**kwargs):
         super(PredNetModel, self).__init__(**kwargs)
         self.cells = [
