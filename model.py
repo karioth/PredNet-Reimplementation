@@ -84,7 +84,10 @@ class PredNetModel(models.Model):
             'layer_loss_weights': self.layer_loss_weights,
             'time_loss_weights': self.time_loss_weights,
         })
-    def from_config(self):
+        return config
+
+    @classmethod
+    def from_config(cls, config):
         cells = [PredNet_Cell.from_config(**cell_config) for cell_config in config['cells']]
         return cls(cells, **config)
         
