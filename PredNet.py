@@ -108,6 +108,8 @@ class PredNet_Cell(layers.Layer):
           'A_filt_size': self.A_filt_size,
           'Ahat_filt_size': self.Ahat_filt_size,
           'R_filt_size': self.R_filt_size}
+        
+        base_config = super().get_config() # Include standard layer attributes
     
         return dict(list(base_config.items()) + list(config.items())
               
