@@ -107,7 +107,7 @@ class PredNet_Cell(layers.Layer):
           'R_stack_size': self.R_stack_size,
           'A_filt_size': self.A_filt_size,
           'Ahat_filt_size': self.Ahat_filt_size,
-          'R_filt_size': = self.R_filt_size}
+          'R_filt_size': self.R_filt_size}
     
         return dict(list(base_config.items()) + list(config.items())
               
