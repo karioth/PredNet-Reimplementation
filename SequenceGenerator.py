@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../")
+
 import tensorflow as tf
 import h5py
 import pickle
