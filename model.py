@@ -32,10 +32,10 @@ class PredNetModel(models.Model):
         self.flatten =  tf.keras.layers.Flatten()
         self.dense = tf.keras.layers.Dense(1, weights=[time_loss_weights, np.zeros(1)], trainable=False)
 
-        self.optimizer = tf.keras.optimizers.Adam()
-        self.mae_loss = tf.keras.losses.MeanAbsoluteError()
+        # self.optimizer = tf.keras.optimizers.Adam()
+        # self.mae_loss = tf.keras.losses.MeanAbsoluteError()
 
-        self.metric_loss = tf.keras.metrics.Mean(name="loss")
+        # self.metric_loss = tf.keras.metrics.Mean(name="loss")
 
     @tf.function
     def call(self, input, training=False):
