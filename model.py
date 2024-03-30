@@ -20,19 +20,19 @@ class PredNetModel(models.Model):
                 for stack_size, R_stack_size, A_filt_size, Ahat_filt_size, R_filt_size in zip(
                     stack_sizes, R_stack_sizes, A_filt_sizes, Ahat_filt_sizes, R_filt_sizes)] # initialize the cells according to the hyperparameters.
 
-        self.nb_layers = len(stack_sizes)
-        self.layer_loss_weights = layer_loss_weights # weighting for each layer in final loss.
-        self.time_loss_weights = time_loss_weights # weighting for the timesteps in final loss.
+        # self.nb_layers = len(stack_sizes)
+        # self.layer_loss_weights = layer_loss_weights # weighting for each layer in final loss.
+        # self.time_loss_weights = time_loss_weights # weighting for the timesteps in final loss.
 
         #PredNet architecture
         self.prednet = PredNet(cell = self.cells, return_sequences = True) # pass the cells to the PredNet(RNN) class
 
         #Layers for additional error computations for weighted loss during traning
-        self.timeDense = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1, trainable=False), weights=[self.layer_loss_weights, np.zeros(1)], trainable=False)
+        self.timeDense = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1, trainable=False), weights=[layer_loss_weights, np.zeros(1)], trainable=False)
         self.flatten =  tf.keras.layers.Flatten()
-        self.dense = tf.keras.layers.Dense(1, weights=[self.time_loss_weights, np.zeros(1)], trainable=False)
+        self.dense = tf.keras.layers.Dense(1, weights=[time_loss_weights, np.zeros(1)], trainable=False)
 
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+        self.optimizer = tf.keras.optimizers.Adam()
         self.mae_loss = tf.keras.losses.MeanAbsoluteError()
 
         self.metric_loss = tf.keras.metrics.Mean(name="loss")
