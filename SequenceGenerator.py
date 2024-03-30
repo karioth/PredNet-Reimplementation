@@ -1,9 +1,5 @@
-import sys
-sys.path.append("../")
-
 import tensorflow as tf
 import h5py
-import pickle
 import numpy as np
 from tensorflow.keras.utils import Sequence
 
