@@ -100,6 +100,7 @@ class PredNet_Cell(layers.Layer):
           return new_e, frame_prediction
 
         return new_e # propagate error response foward to be used by the layer above
+   
    def get_config(self):
         config = {
             'stack_size': self.stack_size,
