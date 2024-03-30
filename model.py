@@ -9,7 +9,7 @@ class PredNetModel(models.Model):
     ''' Puts together a classical version of the PredNet architecture using the modern modular implementation'''
     def __init__(self, stack_sizes, R_stack_sizes, A_filt_sizes, Ahat_filt_sizes, R_filt_sizes, layer_loss_weights, time_loss_weights,**kwargs):
         super(PredNetModel, self).__init__(**kwargs)
-        self.cells = [
+        cells = [
                 PredNet_Cell(
                     stack_size=stack_size,
                     R_stack_size=R_stack_size,
@@ -25,7 +25,7 @@ class PredNetModel(models.Model):
         # self.time_loss_weights = time_loss_weights # weighting for the timesteps in final loss.
 
         #PredNet architecture
-        self.prednet = PredNet(cell = self.cells, return_sequences = True) # pass the cells to the PredNet(RNN) class
+        self.prednet = PredNet(cell = cells, return_sequences = True) # pass the cells to the PredNet(RNN) class
 
         #Layers for additional error computations for weighted loss during traning
         self.timeDense = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1, trainable=False), weights=[layer_loss_weights, np.zeros(1)], trainable=False)
