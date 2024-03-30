@@ -74,8 +74,8 @@ class PredNet_Cell(layers.Layer):
     return _r, _c #return the new _r state to send as feedback downwards and new _c state for use on the next time step.
 
   def call(self, error_input, _r, bottom=False):
-      ''' Bottom-up call. It implements the bottom-up update to compute the target (a), prediction (a_hat) and prediction error (_e).
-      Takes as argument the error from the layer below (or the frame at the bottom layer) and the _r representation computed in the top-down update.'''
+        ''' Bottom-up call. It implements the bottom-up update to compute the target (a), prediction (a_hat) and prediction error (_e).
+        Takes as argument the error from the layer below (or the frame at the bottom layer) and the _r representation computed in the top-down update.'''
 
         if bottom: # we take the frame as the target
           a = error_input
@@ -106,8 +106,8 @@ class PredNet_Cell(layers.Layer):
     
 
 class StackPredNet(layers.StackedRNNCells):
-  ''' Base Class for stacking PredNet Cells.
-  Takes as input a list of PredNet_Cells and stacks them to handle their correct hierarchical interaction on every step of the sequence'''
+    ''' Base Class for stacking PredNet Cells.
+    Takes as input a list of PredNet_Cells and stacks them to handle their correct hierarchical interaction on every step of the sequence'''
     def __init__(self, **kwargs):
         super(StackPredNet, self).__init__(**kwargs)
 
@@ -196,7 +196,7 @@ class StackPredNet(layers.StackedRNNCells):
       return [r_state_sizes, c_state_sizes, e_state_sizes]
 
     def call(self, input, states, training = False):
-      ''' Equivalent to the step function in the original implementation. Handles the dynamics across cell layers of the PredNet'''
+        ''' Equivalent to the step function in the original implementation. Handles the dynamics across cell layers of the PredNet'''
         # We disentangle the states
         prev_r_states = states[0]
         prev_c_states = states[1]
