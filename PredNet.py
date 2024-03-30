@@ -69,6 +69,7 @@ class PredNet_Cell(layers.Layer):
     new_c = conv_lstm_states[1]
 
     return new_r, new_c #return the new new_r state to send as feedback downwards and new new_c state for use on the next time step.
+  
 
   def call(self, error_input, new_r, bottom=False):
         ''' Bottom-up call. It implements the bottom-up update to compute the target (a), prediction (a_hat) and prediction error (new_e).
@@ -100,6 +101,16 @@ class PredNet_Cell(layers.Layer):
           return new_e, frame_prediction
 
         return new_e # propagate error response foward to be used by the layer above
+  def get_config(self):
+        config = { 
+          'stack_size': self.stack_size,
+          'R_stack_size': self.R_stack_size,
+          'A_filt_size': self.A_filt_size,
+          'Ahat_filt_size': self.Ahat_filt_size,
+          'R_filt_size': = self.R_filt_size}
+    
+        return dict(list(base_config.items()) + list(config.items())
+              
     
     # def get_config(self):
     #      config = {
