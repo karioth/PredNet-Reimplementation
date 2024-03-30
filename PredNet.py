@@ -435,10 +435,8 @@ class PredNet(RNN):
 
     if self.state_spec is not None:
       # initial_state was passed in call, check compatibility
-      if self.cell.data_format == 'channels_first':
-        ch_dim = 1
-      elif self.cell.data_format == 'channels_last':
-        ch_dim = 3
+      ch_dim = 3 #assume channel's last
+      
       if [spec.shape[ch_dim] for spec in self.state_spec] != state_size:
         raise ValueError(
             'An initial_state was passed that is not compatible with '
@@ -447,12 +445,8 @@ class PredNet(RNN):
             '{}'.format([spec.shape for spec in self.state_spec],
                         self.cell.state_size))
     else:
-      if self.cell.data_format == 'channels_first':
-        self.state_spec = [InputSpec(shape=(None, dim, None, None))
-                           for dim in state_size]
-      elif self.cell.data_format == 'channels_last':
-        self.state_spec = [] # Change to allow for nested state_spect due to stacking
-        for state in state_size:
+       self.state_spec = [] # Change to allow for nested state_spect due to stacking
+       for state in state_size:
           self.state_spec.append([InputSpec(shape=(None, None, None, dim))
                             for dim in state])
     if self.stateful:
