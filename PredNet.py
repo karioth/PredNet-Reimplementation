@@ -111,7 +111,7 @@ class PredNet_Cell(layers.Layer):
         
         base_config = super().get_config() # Include standard layer attributes
     
-        return dict(list(base_config.items()) + list(config.items())
+        return dict(list(base_config.items()) + list(config.items()))
               
     
     # def get_config(self):
