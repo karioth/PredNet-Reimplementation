@@ -101,6 +101,7 @@ class PredNet_Cell(layers.Layer):
           return new_e, frame_prediction
 
         return new_e # propagate error response foward to be used by the layer above
+    
   def get_config(self):
         config = { 
           'stack_size': self.stack_size,
@@ -112,20 +113,11 @@ class PredNet_Cell(layers.Layer):
         base_config = super().get_config() # Include standard layer attributes
     
         return dict(list(base_config.items()) + list(config.items()))
-              
-    
-    # def get_config(self):
-    #      config = {
-    #         'stack_size': self.stack_size,
-    #         'R_stack_size': self.R_stack_size,
-    #         'A_filt_size': self.A_filt_size,
-    #         'Ahat_filt_size': self.Ahat_filt_size,
-    #         'R_filt_size': self.R_filt_size}
-      
-    #      base_config = super().get_config()  # Include standard layer attributes
-        
-    #      return dict(list(base_config.items()) + list(config.items())
-    
+  
+  @classmethod
+  def from_config(cls, config):
+        return cls(**config)
+
 
 class StackPredNet(layers.StackedRNNCells):
     ''' Base Class for stacking PredNet Cells.
