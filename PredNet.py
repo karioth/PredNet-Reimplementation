@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../")
+
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.python.keras.layers.convolutional_recurrent import ConvLSTM2DCell
