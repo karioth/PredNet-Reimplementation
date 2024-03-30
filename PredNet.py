@@ -101,8 +101,6 @@ class PredNet_Cell(layers.Layer):
 
         return new_e # propagate error response foward to be used by the layer above
    def get_config(self):
-        """Returns the configuration of the PredNet_Cell layer.
-        """
         config = {
             'stack_size': self.stack_size,
             'R_stack_size': self.R_stack_size,
