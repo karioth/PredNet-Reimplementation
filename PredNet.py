@@ -65,14 +65,14 @@ class PredNet_Cell(layers.Layer):
     else:
       inputs = tf.concat([prev_e, prev_r], axis=-1) # use only the previous error and r if we are at the top layer.
 
-    _r, conv_lstm_states = self.convlstmcell(inputs, [prev_r, prev_c]) # we pass the r and c states expected by the ConvLSTM2DCell along with the input.
-    _c = conv_lstm_states[1]
+    new_r, conv_lstm_states = self.convlstmcell(inputs, [prev_r, prev_c]) # we pass the r and c states expected by the ConvLSTM2DCell along with the input.
+    new_c = conv_lstm_states[1]
 
-    return _r, _c #return the new _r state to send as feedback downwards and new _c state for use on the next time step.
+    return new_r, new_c #return the new new_r state to send as feedback downwards and new new_c state for use on the next time step.
 
-  def call(self, error_input, _r, bottom=False):
-        ''' Bottom-up call. It implements the bottom-up update to compute the target (a), prediction (a_hat) and prediction error (_e).
-        Takes as argument the error from the layer below (or the frame at the bottom layer) and the _r representation computed in the top-down update.'''
+  def call(self, error_input, new_r, bottom=False):
+        ''' Bottom-up call. It implements the bottom-up update to compute the target (a), prediction (a_hat) and prediction error (new_e).
+        Takes as argument the error from the layer below (or the frame at the bottom layer) and the new_r representation computed in the top-down update.'''
 
         if bottom: # we take the frame as the target
           a = error_input
@@ -80,7 +80,7 @@ class PredNet_Cell(layers.Layer):
           a = self.conv_a(error_input)
           a = self.pool_a(a)
 
-        a_hat = self.conv_a_hat(_r) # we use the _r representation to compute our prediction (a_hat) of the target.
+        a_hat = self.conv_a_hat(new_r) # we use the new_r representation to compute our prediction (a_hat) of the target.
 
         if bottom: # We apply clipping to set the at maximum pixel value (1)
           a_hat = tf.minimum(1.0, a_hat)
@@ -93,13 +93,13 @@ class PredNet_Cell(layers.Layer):
         neg_error = self.substract([a_hat, a])
         neg_error = self.relu(neg_error)
 
-        _e = tf.concat([pos_error, neg_error], axis=-1) #Concatenate them along the feature dimension to get the error response.
+        new_e = tf.concat([pos_error, neg_error], axis=-1) #Concatenate them along the feature dimension to get the error response.
 
         if bottom: # we output the frame prediction as well
           frame_prediction = a_hat
-          return _e, frame_prediction
+          return new_e, frame_prediction
 
-        return _e # propagate error response foward to be used by the layer above
+        return new_e # propagate error response foward to be used by the layer above
     
 
 class StackPredNet(layers.StackedRNNCells):
@@ -208,26 +208,26 @@ class StackPredNet(layers.StackedRNNCells):
 
         all_error = None # Variable for tranining.
 
-        #top down pass using the custom top_down call of each cell. We iterate in reverse and calculate the new _r and _c states:
+        #top down pass using the custom top_down call of each cell. We iterate in reverse and calculate the new new_r and new_c states:
         for l, cell in reversed(list(enumerate(self.cells))):
           layer_states = [prev_r_states[l], prev_c_states[l], prev_e_states[l]]
 
           if l == self.nb_layers - 1:
-            _r, _c = cell.top_down(layer_states, top_r=None) # pass None as feedback if we are at the top layer.
+            new_r, new_c = cell.top_down(layer_states, top_r=None) # pass None as feedback if we are at the top layer.
           else:
-            _r,_c = cell.top_down(layer_states, top_r = _r) # pass the _r just calculated for the layer above as top down feedback.
+            new_r, new_c = cell.top_down(layer_states, top_r = new_r) # pass the new_r just calculated for the layer above as top down feedback.
 
           #insert states on the list rather than appending to not get a reversed list.
-          new_r_states.insert(0, _r)
-          new_c_states.insert(0, _c)
+          new_r_states.insert(0, new_r)
+          new_c_states.insert(0, new_c)
 
-        #bottom_up pass, we iterate normarly calling every cell with the current input and the just calculated _r representation corresponding to that layer.
+        #bottom_up pass, we iterate normarly calling every cell with the current input and the just calculated new_r representation corresponding to that layer.
         for l, cell in enumerate(self.cells):
-          _r = new_r_states[l]
+          new_r = new_r_states[l]
           if l == 0:  # Bottom layer
-            error, frame_prediction = cell(current_input, _r, bottom=True)
+            error, frame_prediction = cell(current_input, new_r, bottom=True)
           else:
-            error = cell(current_input, _r)
+            error = cell(current_input, new_r)
 
           current_input = error #pass the error just computed forward as the input to the next layer.
 
