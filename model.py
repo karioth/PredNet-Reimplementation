@@ -64,6 +64,8 @@ class PredNetModel(models.Model):
         gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
         self.metric_loss.update_state(loss)
+        
+        return {m.name: m.result() for m in self.metrics}
     
     @property
     def metrics(self):
