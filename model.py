@@ -49,21 +49,23 @@ class PredNetModel(models.Model):
         #print("Target shape:", target.shape)
         with tf.GradientTape() as tape:
             all_error = self(x, training = True) #set traning = True to get errors as output
-            #print("All_error shape:", all_error.shape)   
+
             #apply the additional error computations
             time_error = self.timeDense(all_error)
-            #print("Time_error shape:", time_error.shape)
             flattened = self.flatten(time_error)
-            #print("Flattened shape:", flattened.shape)
             prediction_error = self.dense(flattened)
-            #print("Prediction_error shape:", prediction_error.shape)
 
             loss = self.compute_loss(y = target, y_pred = prediction_error) # target is a 0 initialized array reflecting the self-supervided goal of minimizing overall prediction error.
-            #print("Loss:", loss)
+
             
         gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
-        self.metric_loss.update_state(loss)
+        
+        for metric in self.metrics:
+            if metric.name == "loss":
+                metric.update_state(loss)
+            else:
+                metric.update_state(target, prediction_error)
         
         return {m.name: m.result() for m in self.metrics}
     
@@ -80,7 +82,11 @@ class PredNetModel(models.Model):
         flattened = self.flatten(time_error)
         prediction_error_val = self.dense(flattened)
 
-        val_loss = self.compute_loss(y=target_val, y_pred = prediction_error_val)
+        self.compute_loss(y=target_val, y_pred = prediction_error_val)
+       
+        for metric in self.metrics:
+            if metric.name != "loss":
+                metric.update_state(y, y_pred)
         
         return {m.name: m.result() for m in self.metrics}
     
