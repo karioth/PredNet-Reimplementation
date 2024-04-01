@@ -1,3 +1,7 @@
+import tensorflow as tf
+import h5py
+import numpy as np
+
 class SequenceGenerator:
     def __init__(self, data_file, source_file, nt, sequence_start_mode='all'):
         # Open the data file and load the data
