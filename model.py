@@ -70,7 +70,8 @@ class PredNetModel(models.Model):
     @property
     def metrics(self):
         return [self.metric_loss]
-
+    
+    @tf.function
     def test_step(self, data):
         # Reset validation metrics
         self.metric_loss.reset_states()
