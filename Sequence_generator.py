@@ -31,7 +31,7 @@ class SequenceGenerator:
         if shuffle:
             self.possible_starts = np.random.permutation(self.possible_starts)
         
-    self.dataset = tf.data.Dataset.from_generator(self.__generator,
+        self.dataset = tf.data.Dataset.from_generator(self.__generator,
                                                       output_signature=(tf.TensorSpec(shape=(self.nt,) + self.im_shape, dtype=tf.float32),
                                                                         tf.TensorSpec(shape=(), dtype=tf.float32)))
     def __generator(self):
