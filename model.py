@@ -73,20 +73,14 @@ class PredNetModel(models.Model):
     
     @tf.function
     def test_step(self, data):
-        # Reset validation metrics
-        self.metric_loss.reset_states()
-        # Iterate over validation data
-        for x_val, target_val in data:
-          all_error_val = self(x_val, training = True)
+        x, target_val = data
+        all_error_val = self(x_val, training = True)
+        #apply the additional error computations
+        time_error = self.timeDense(all_error_val)
+        flattened = self.flatten(time_error)
+        prediction_error_val = self.dense(flattened)
 
-          #apply the additional error computations
-          time_error = self.timeDense(all_error_val)
-          flattened = self.flatten(time_error)
-          prediction_error_val = self.dense(flattened)
-
-          val_loss = self.loss(target_val, prediction_error_val)
-
-          self.metric_loss.update_state(val_loss)
+        val_loss = self.compute_loss(y=target_val, y_pred = prediction_error_val)
         
         return {m.name: m.result() for m in self.metrics}
     
