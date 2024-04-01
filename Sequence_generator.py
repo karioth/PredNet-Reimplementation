@@ -25,6 +25,7 @@ class SequenceGenerator(Sequence):
             self.possible_starts = np.array([i for i in range(len(self.sources) - self.nt + 1) if self.sources[i] == self.sources[i + self.nt - 1]])
         elif sequence_start_mode == 'unique':
             self.possible_starts = self._calculate_unique_starts()
+        
         if shuffle:
             self.possible_starts = np.random.permutation(self.possible_starts)
         
