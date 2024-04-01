@@ -3,7 +3,7 @@ import h5py
 import numpy as np
 from tensorflow.keras.utils import Sequence
 
-class SequenceGenerator(Sequence):
+class SequenceGenerator:
     def __init__(self, data_file, source_file, nt, sequence_start_mode='all', shuffle=False):
         
         self.start_mode = sequence_start_mode
@@ -23,25 +23,23 @@ class SequenceGenerator(Sequence):
         # Determine possible start indices for sequences
         if sequence_start_mode == 'all':
             self.possible_starts = np.array([i for i in range(len(self.sources) - self.nt + 1) if self.sources[i] == self.sources[i + self.nt - 1]])
-            print('success')
         elif sequence_start_mode == 'unique':
             self.possible_starts = self._calculate_unique_starts()
-    
-        
+     
         self.N_sequences = len(self.possible_starts)
+        
         if shuffle:
             self.possible_starts = np.random.permutation(self.possible_starts)
         
-    def __len__(self):
-        return self.N_sequences
-    
-    def __getitem__(self, index):
-        # Randomly select a starting index
-        idx = self.possible_starts[index]
-        # Generate a single sequence
-        sequence = self.preprocess(self.X[idx:idx+self.nt])
-        target = 0.0
-        return sequence, target
+    self.dataset = tf.data.Dataset.from_generator(self._generator,
+                                                      output_signature=(tf.TensorSpec(shape=(self.nt,) + self.im_shape, dtype=tf.float32),
+                                                                        tf.TensorSpec(shape=(), dtype=tf.float32)))
+    def __generator(self):
+        while True:
+            for idx in self.possible_starts:
+                sequence = self.preprocess(self.X[idx:idx+self.nt])
+                target = 0.0
+                yield sequence, target
 
     # Preprocess the data (normalize)
     def preprocess(self, X):
@@ -64,3 +62,6 @@ class SequenceGenerator(Sequence):
             else:
                 curr_location += 1
         return np.array(possible_starts)
+        
+    def get_dataset(self):
+        return self.dataset
