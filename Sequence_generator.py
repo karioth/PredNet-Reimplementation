@@ -1,9 +1,12 @@
 import tensorflow as tf
 import h5py
 import numpy as np
+from tensorflow.keras.utils import Sequence
 
-class SequenceGenerator:
+class SequenceGenerator(Sequence):
     def __init__(self, data_file, source_file, nt, sequence_start_mode='all'):
+        
+        self.start_mode = sequence_start_mode
         # Open the data file and load the data
         with h5py.File(data_file, 'r') as f:
             key = list(f.keys())[0]
@@ -22,33 +25,29 @@ class SequenceGenerator:
             self.possible_starts = np.array([i for i in range(len(self.sources) - self.nt + 1) if self.sources[i] == self.sources[i + self.nt - 1]])
         elif sequence_start_mode == 'unique':
             self.possible_starts = self._calculate_unique_starts()
+        self.N_sequences = len(self.possible_starts)
+    
+    def __len__(self):
+        return self.N_sequences
+    
+    def __getitem__(self, index):
+        # Randomly select a starting index
+        idx = self.possible_starts[index]
+        # Generate a single sequence
+        sequence = self.preprocess(self.X[idx:idx+self.nt])
+        target = 0.0
+        return sequence, target
 
-        
-        # Create a TensorFlow Dataset using from_generator
-        self.dataset = tf.data.Dataset.from_generator(
-            self._generator,
-            output_signature=(
-                tf.TensorSpec(shape=(self.nt,) + self.im_shape, dtype=tf.float32),
-                tf.TensorSpec(shape=(), dtype=tf.float32)
-            ))
-    
-    def _generator(self):
-        while True:
-            # Randomly select a starting index
-            start = np.random.choice(self.possible_starts)
-            
-            # Generate a single sequence
-            sequence = self.preprocess(self.X[start:start+self.nt])
-            target = 0.0
-            
-            yield sequence, target
-    
     # Preprocess the data (normalize)
     def preprocess(self, X):
         return X.astype(np.float32) / 255
     
-    def get_dataset(self):
-        return self.dataset
+    # Create all sequences (optional utility function)
+    def create_all(self):
+        X_all = np.zeros((self.N_sequences, self.nt) + self.im_shape, np.float32)
+        for i, idx in enumerate(self.possible_starts):
+            X_all[i] = self.preprocess(self.X[idx:idx+self.nt])
+        return X_all
 
     def _calculate_unique_starts(self):
         curr_location = 0
