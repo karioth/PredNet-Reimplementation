@@ -73,7 +73,7 @@ class PredNetModel(models.Model):
     
     @tf.function
     def test_step(self, data):
-        x, target_val = data
+        x_val, target_val = data
         all_error_val = self(x_val, training = True)
         #apply the additional error computations
         time_error = self.timeDense(all_error_val)
