@@ -43,7 +43,8 @@ class PredNetModel(models.Model):
         return x
 
     @tf.function
-    def train_step(self, x, target):
+    def train_step(self, data):
+        x, target = data
         with tf.GradientTape() as tape:
             all_error = self(x, training = True) #set traning = True to get errors as output
 
@@ -57,12 +58,16 @@ class PredNetModel(models.Model):
         gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
         self.metric_loss.update_state(loss)
+    
+    @property
+    def metrics(self):
+        return self.metric_loss
 
-    def validate(self, val_data):
+    def test_step(self, data):
         # Reset validation metrics
         self.metric_loss.reset_states()
         # Iterate over validation data
-        for x_val, target_val in val_data:
+        for x_val, target_val in data:
           all_error_val = self(x_val, training = True)
 
           #apply the additional error computations
@@ -73,7 +78,7 @@ class PredNetModel(models.Model):
           val_loss = self.loss(target_val, prediction_error_val)
 
           self.metric_loss.update_state(val_loss)
-
+        
         return self.metric_loss.result()
     
     def get_config(self):
