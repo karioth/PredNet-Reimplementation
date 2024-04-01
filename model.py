@@ -54,7 +54,7 @@ class PredNetModel(models.Model):
             flattened = self.flatten(time_error)
             prediction_error = self.dense(flattened)
 
-            loss = self.loss(target, prediction_error) # target is a 0 initialized array reflecting the self-supervided goal of minimizing overall prediction error.
+            loss = self.compute_loss(y = target, y_pred = prediction_error) # target is a 0 initialized array reflecting the self-supervided goal of minimizing overall prediction error.
 
         gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
@@ -80,7 +80,7 @@ class PredNetModel(models.Model):
 
           self.metric_loss.update_state(val_loss)
         
-        return self.metric_loss.result()
+        return {m.name: m.result() for m in self.metrics}
     
     def get_config(self):
         cell_configs = [cell.get_config() for cell in self.cells]
