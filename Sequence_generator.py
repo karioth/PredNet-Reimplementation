@@ -36,7 +36,8 @@ class SequenceGenerator:
                                                                         tf.TensorSpec(shape=(), dtype=tf.float32)))
     def __generator(self):
         while True:
-            for idx in self.possible_starts:
+            for i, idx in enumerate(self.possible_starts):
+                print(i)
                 sequence = self.preprocess(self.X[idx:idx+self.nt])
                 target = 0.0
                 yield sequence, target
