@@ -45,8 +45,6 @@ class PredNetModel(models.Model):
     @tf.function
     def train_step(self, data):
         x, target = data
-        #print("Input shape:", x.shape)
-        #print("Target shape:", target.shape)
         with tf.GradientTape() as tape:
             all_error = self(x, training = True) #set traning = True to get errors as output
 
