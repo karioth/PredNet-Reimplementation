@@ -61,7 +61,7 @@ class PredNetModel(models.Model):
     
     @property
     def metrics(self):
-        return self.metric_loss
+        return [self.metric_loss]
 
     def test_step(self, data):
         # Reset validation metrics
