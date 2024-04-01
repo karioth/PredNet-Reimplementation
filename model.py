@@ -45,21 +45,21 @@ class PredNetModel(models.Model):
     @tf.function
     def train_step(self, data):
         x, target = data
-        print("Input shape:", x.shape)
-        print("Target shape:", target.shape)
+        #print("Input shape:", x.shape)
+        #print("Target shape:", target.shape)
         with tf.GradientTape() as tape:
             all_error = self(x, training = True) #set traning = True to get errors as output
-            print("All_error shape:", all_error.shape)   
+            #print("All_error shape:", all_error.shape)   
             #apply the additional error computations
             time_error = self.timeDense(all_error)
-            print("Time_error shape:", time_error.shape)
+            #print("Time_error shape:", time_error.shape)
             flattened = self.flatten(time_error)
-            print("Flattened shape:", flattened.shape)
+            #print("Flattened shape:", flattened.shape)
             prediction_error = self.dense(flattened)
-            print("Prediction_error shape:", prediction_error.shape)
+            #print("Prediction_error shape:", prediction_error.shape)
 
             loss = self.compute_loss(y = target, y_pred = prediction_error) # target is a 0 initialized array reflecting the self-supervided goal of minimizing overall prediction error.
-            print("Loss:", loss)
+            #print("Loss:", loss)
             
         gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
