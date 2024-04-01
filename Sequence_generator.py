@@ -4,7 +4,7 @@ import numpy as np
 from tensorflow.keras.utils import Sequence
 
 class SequenceGenerator(Sequence):
-    def __init__(self, data_file, source_file, nt, sequence_start_mode='all'):
+    def __init__(self, data_file, source_file, nt, sequence_start_mode='all', shuffle=False):
         
         self.start_mode = sequence_start_mode
         # Open the data file and load the data
@@ -25,6 +25,9 @@ class SequenceGenerator(Sequence):
             self.possible_starts = np.array([i for i in range(len(self.sources) - self.nt + 1) if self.sources[i] == self.sources[i + self.nt - 1]])
         elif sequence_start_mode == 'unique':
             self.possible_starts = self._calculate_unique_starts()
+        if shuffle:
+            self.possible_starts = np.random.permutation(self.possible_starts)
+        
         self.N_sequences = len(self.possible_starts)
     
     def __len__(self):
