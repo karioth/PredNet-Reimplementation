@@ -42,10 +42,10 @@ class PredNetModel(models.Model):
         x = self.prednet(input, training=training)
         return x
 
-    @tf.function
+    #@tf.function
     def train_step(self, data):
         x, target = data
-        print(x.shape, target.shape)
+        #print(x.shape, target.shape)
         with tf.GradientTape() as tape:
             all_error = self(x, training = True) #set traning = True to get errors as output
 
