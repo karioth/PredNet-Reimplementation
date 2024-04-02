@@ -1,8 +1,12 @@
 import tensorflow as tf
 import h5py
 import numpy as np
+import imageio
+import IPython.display as display
+import tensorflow as tf
+import matplotlib.pyplot as plt
 
-class SequenceGenerator: #useful for h5py data like used in the original
+class SequenceGenerator: #used for hkl data files like used in the original data pipeline. 
     def __init__(self, data_file, source_file, nt, sequence_start_mode='all', shuffle=False):
         
         self.start_mode = sequence_start_mode
@@ -66,7 +70,13 @@ class SequenceGenerator: #useful for h5py data like used in the original
         return self.dataset
 
 
-def prepare_data(dataset):
+def prepare_data(dataset): # Dataset should contain image sequences with shape (nt, height, width, n_channels)
+  #TODO: - check if the dataset already have targets, if so, remove them to fit self-supervised objective
+  # - check that the img size in the sequences are correct and divisible by  2^(nb of layers - 1) because of the cyclical 2x2 max-pooling and upsampling operations.
+  # reize accordingly
+  # -- find a way to add conditionals while still working with dataset.apply() for tensorflow  -- otherwise it overloads the memory.
+  # e.g., add target should be a conditional, since it is not necessary for test evaluation. Similarly for resizing, only if it is necessary.
+  # -- check that the nt is correct, if not shorten to the desired nt. If nt is to short, raise a value error flag and ask user to adapt the seq lenght expected. 
   #convert data and normalize
   cast = lambda seq: tf.cast(seq, tf.float32)
   dataset = dataset.map(cast, num_parallel_calls=tf.data.AUTOTUNE)
