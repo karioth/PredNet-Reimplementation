@@ -35,7 +35,7 @@ class PredNetModel(models.Model):
         # self.optimizer = tf.keras.optimizers.Adam()
         # self.mae_loss = tf.keras.losses.MeanAbsoluteError()
 
-        self.metric_loss = tf.keras.metrics.Mean(name="loss")
+        #self.metric_loss = tf.keras.metrics.Mean(name="loss")
 
     @tf.function
     def call(self, input, training=False):
@@ -67,9 +67,9 @@ class PredNetModel(models.Model):
         
         return {m.name: m.result() for m in self.metrics}
     
-    @property
-    def metrics(self):
-        return [self.metric_loss]
+    # @property
+    # def metrics(self):
+    #     return [self.metric_loss]
     
     @tf.function
     def test_step(self, data):
