@@ -30,7 +30,7 @@ class PredNet_Cell(layers.Layer):
 
       #for r -- computes the representation used to make a prediction
         #self.convlstmcell = ConvLSTM2DCell(filters=self.R_stack_size, kernel_size=self.R_filt_size, padding='same', activation='relu', strides=(1, 1))
-        self.convlstmcell = ConvLSTM2DCell(filters=self.R_stack_size, kernel_size=self.R_filt_size, padding='same', activation='tahn', recurrent_activation='hard_sigmoid', strides=(1, 1))
+        self.convlstmcell = ConvLSTM2DCell(filters=self.R_stack_size, kernel_size=self.R_filt_size, padding='same', activation='tanh', recurrent_activation='hard_sigmoid', strides=(1, 1))
         self.upsample = layers.UpSampling2D(size=(2, 2))
 
       #for e -- computes the negative and possitive error.
