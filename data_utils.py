@@ -2,7 +2,7 @@ import tensorflow as tf
 import h5py
 import numpy as np
 
-class SequenceGenerator:
+class SequenceGenerator: #useful for h5py data like used in the original
     def __init__(self, data_file, source_file, nt, sequence_start_mode='all', shuffle=False):
         
         self.start_mode = sequence_start_mode
@@ -44,7 +44,7 @@ class SequenceGenerator:
     # def preprocess(self, X):
     #     return X.astype(np.float32) / 255
     
-    # Create all sequences (optional utility function)
+    # Create all sequences (optional utility function for testing predictions)
     def create_all(self):
         X_all = np.zeros((self.N_sequences, self.nt) + self.im_shape, np.float32)
         for i, idx in enumerate(self.possible_starts):
@@ -64,3 +64,48 @@ class SequenceGenerator:
         
     def get_dataset(self):
         return self.dataset
+
+
+def prepare_data(dataset):
+  #convert data and normalize
+  cast = lambda seq: tf.cast(seq, tf.float32)
+  dataset = dataset.map(cast, num_parallel_calls=tf.data.AUTOTUNE)
+  norm = lambda seq: (seq/255.)
+  dataset = dataset.map(norm, num_parallel_calls=tf.data.AUTOTUNE)
+  # add 0s as targets, since the goal is to minimize the output of the network during traning (weighted error) to 0. 
+  add_target = lambda seq: (seq, 0.0)
+  dataset = dataset.map(add_target, num_parallel_calls=tf.data.AUTOTUNE)
+
+  #shuffle batch prefetch
+  dataset = dataset.shuffle(2000)
+  dataset = dataset.batch(batch_size) 
+  dataset = dataset.prefetch(tf.data.AUTOTUNE)
+  
+  return dataset
+
+def visualize_sequences_as_gif(dataset, num=3):
+    """
+    Visualize a sequences of images (a video snippet) as an animated GIF with looping.
+    Args: 
+    dataset: dataset to get the sequences from, should have shape (batch_size, nt, height, width, n_channels)
+    num: number of sequences to be plotted.  
+    """
+    #Fetch sequence from the dataset
+    for sequence in dataset_train.take(num):
+        first_sequence = (sequence[0][0].numpy() * 255).astype(np.uint8)
+        # Create an animated GIF with looping
+        with imageio.get_writer('sequence.gif', mode='I', duration=0.3, loop=0) as writer:
+            for image in sequence:
+                writer.append_data(image)
+        # Load the GIF and display it
+        with open('sequence.gif', 'rb') as f:
+            display.display(display.Image(data=f.read(), format='png'))
+        
+        print("Shape of the sequence:", first_sequence.shape)
+        fig, axes = plt.subplots(1, sequence_length, figsize=(20, 2))
+        for i, ax in enumerate(axes):
+            ax.imshow(first_sequence[i].astype("uint8"))
+            ax.axis('off')
+        plt.show()
+        
+        
