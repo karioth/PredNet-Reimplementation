@@ -101,7 +101,7 @@ def visualize_sequences_as_gif(dataset, num=3):
     num: number of sequences to be plotted.  
     """
     #Fetch sequence from the dataset
-    for sequence in dataset_train.take(num):
+    for sequence in dataset.take(num):
         first_sequence = (sequence[0][0].numpy() * 255).astype(np.uint8)
         # Create an animated GIF with looping
         with imageio.get_writer('sequence.gif', mode='I', duration=0.3, loop=0) as writer:
