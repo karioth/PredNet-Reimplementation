@@ -44,6 +44,7 @@ class PredNetModel(models.Model):
 
     @tf.function
     def train_step(self, data):
+        print('Data:', data)
         x, target = data
         print('Shape x:', x.shape)
         print('Shape target:', target.shape)
