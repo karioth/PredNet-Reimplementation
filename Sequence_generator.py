@@ -1,7 +1,6 @@
 import tensorflow as tf
 import h5py
 import numpy as np
-from tensorflow.keras.utils import Sequence
 
 class SequenceGenerator:
     def __init__(self, data_file, source_file, nt, sequence_start_mode='all', shuffle=False):
@@ -37,19 +36,19 @@ class SequenceGenerator:
     def __generator(self):
         while True:
             for idx in self.possible_starts:
-                sequence = self.preprocess(self.X[idx:idx+self.nt])
-                target = 0.0
-                yield sequence, target
+                sequence = self.X[idx:idx+self.nt]
+                #target = 0.0
+                yield sequence#, target
 
-    # Preprocess the data (normalize)
-    def preprocess(self, X):
-        return X.astype(np.float32) / 255
+    # # Preprocess the data (normalize)
+    # def preprocess(self, X):
+    #     return X.astype(np.float32) / 255
     
     # Create all sequences (optional utility function)
     def create_all(self):
         X_all = np.zeros((self.N_sequences, self.nt) + self.im_shape, np.float32)
         for i, idx in enumerate(self.possible_starts):
-            X_all[i] = self.preprocess(self.X[idx:idx+self.nt])
+            X_all[i] = self.X[idx:idx+self.nt]
         return X_all
 
     def _calculate_unique_starts(self):
