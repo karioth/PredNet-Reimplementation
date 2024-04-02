@@ -70,7 +70,7 @@ class SequenceGenerator: #used for hkl data files like used in the original data
         return self.dataset
 
 
-def prepare_data(dataset): # Dataset should contain image sequences with shape (nt, height, width, n_channels)
+def prepare_data(dataset, batch_size): # Dataset should contain image sequences with shape (nt, height, width, n_channels)
   #TODO: - check if the dataset already have targets, if so, remove them to fit self-supervised objective
   # - check that the img size in the sequences are correct and divisible by  2^(nb of layers - 1) because of the cyclical 2x2 max-pooling and upsampling operations.
   # reize accordingly
