@@ -249,8 +249,10 @@ class StackPredNet(layers.StackedRNNCells):
           current_input = error #pass the error just computed forward as the input to the next layer.
 
           new_e_states.append(error)
-          layer_error = tf.reduce_mean(tf.keras.layers.Flatten()(error), axis=-1, keepdims=True)
-          all_error = layer_error if l == 0 else tf.concat((all_error, layer_error), axis=-1) # add the layer_error to the all_error output for traning.
+          
+          if training: # compute layer error and add to all_error
+            layer_error = tf.reduce_mean(tf.keras.layers.Flatten()(error), axis=-1, keepdims=True)
+            all_error = layer_error if l == 0 else tf.concat((all_error, layer_error), axis=-1) # add the layer_error to the all_error output for traning.
 
         new_states_per_layer = [new_r_states, new_c_states, new_e_states] # Make a list of the new states for the next time step
 
