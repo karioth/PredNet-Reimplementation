@@ -66,30 +66,21 @@ class SequenceGenerator: #used for hkl data files like used in the original data
 
 
 
-def visualize_sequences_as_gif(dataset, num=3):
+def visualize_sequence_as_gif(sequence):
     """
-    Visualize a sequences of images (a video snippet) as an animated GIF with looping.
-    Args: 
-    dataset: dataset to get the sequences from, should have shape (batch_size, nt, height, width, n_channels)
-    num: number of sequences to be plotted.  
+    Visualize a sequence of images (a video snippet) as an animated GIF with looping.
     """
-    #Fetch sequence from the dataset
-    for sequence, target in dataset.take(num):
-        first_sequence = (sequence[0][0].numpy() * 255).astype(np.uint8)
-        # Create an animated GIF with looping
-        with imageio.get_writer('sequence.gif', mode='I', duration=0.3, loop=0) as writer:
-            for image in sequence:
-                writer.append_data(image)
-        # Load the GIF and display it
-        with open('sequence.gif', 'rb') as f:
-            display.display(display.Image(data=f.read(), format='png'))
-        
-        print("Shape of the sequence:", first_sequence.shape)
-        fig, axes = plt.subplots(1, sequence_length, figsize=(20, 2))
-        for i, ax in enumerate(axes):
-            ax.imshow(first_sequence[i].astype("uint8"))
-            ax.axis('off')
-        plt.show()
+
+    # Create an animated GIF with looping
+    with imageio.get_writer('sequence.gif', mode='I', duration=0.3, loop=0) as writer:
+        for image in sequence:
+            writer.append_data(image)
+
+    # Load the GIF and display it
+    with open('sequence.gif', 'rb') as f:
+        display.display(display.Image(data=f.read(), format='png'))
+        # delete the gif file after displaying it
+        os.remove('sequence.gif')
 
 
 def visualize_sequence(dataset, how_many=3, sequence_length=10):
