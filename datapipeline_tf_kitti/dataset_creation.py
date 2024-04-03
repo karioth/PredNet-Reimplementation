@@ -78,7 +78,6 @@ def make_dataset(folder_paths, sequence_length, batch_size, target_size, shuffle
         # Check if folder_dataset is not None or not empty before concatenating
         if folder_dataset.cardinality().numpy() != 0:
             all_videos_dataset = all_videos_dataset.concatenate(folder_dataset)
-
     # Shuffle the dataset if needed
     if shuffle:
         all_videos_dataset = all_videos_dataset.shuffle(buffer_size=shuffle_buffer_size)  # Adjust buffer_size based on dataset size
@@ -101,6 +100,9 @@ def make_dataset(folder_paths, sequence_length, batch_size, target_size, shuffle
         return batch_x, batch_y
     # After batching dataset, apply the shape setting function
     batched_dataset = batched_dataset.map(set_shape)
+
+    # repeat the dataset indefinitely
+    batched_dataset = batched_dataset.repeat()
 
     batched_dataset = batched_dataset.prefetch(tf.data.AUTOTUNE)
 
