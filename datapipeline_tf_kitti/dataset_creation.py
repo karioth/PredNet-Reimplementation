@@ -46,7 +46,7 @@ def make_dataset_for_folder(folder_path, sequence_length, target_size, sequence_
 
     return sequence_dataset
 
-def make_dataset(folder_paths, sequence_length, batch_size, target_size, shuffle=False, shuffle_buffer_size=100, sequence_start_mode='all', output_mode='error', N_seq=None):
+def make_dataset(folder_paths, sequence_length, batch_size, target_size, shuffle=False, shuffle_buffer_size=100, sequence_start_mode='all', output_mode='error', N_seq=None, epochs=None):
     """
     Create a dataset from the given folder paths.
 
@@ -102,7 +102,7 @@ def make_dataset(folder_paths, sequence_length, batch_size, target_size, shuffle
     batched_dataset = batched_dataset.map(set_shape)
 
     # repeat the dataset indefinitely
-    batched_dataset = batched_dataset.repeat()
+    batched_dataset = batched_dataset.repeat(epochs)
 
     batched_dataset = batched_dataset.prefetch(tf.data.AUTOTUNE)
 
