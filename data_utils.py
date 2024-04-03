@@ -43,10 +43,6 @@ class SequenceGenerator: #used for hkl data files like used in the original data
                 sequence = self.X[idx:idx+self.nt]
                 #target = 0.0
                 yield sequence#, target
-
-    # # Preprocess the data (normalize)
-    # def preprocess(self, X):
-    #     return X.astype(np.float32) / 255
     
     # Create all sequences (optional utility function for testing predictions)
     def create_all(self):
