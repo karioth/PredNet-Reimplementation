@@ -32,10 +32,6 @@ class PredNetModel(models.Model):
         self.flatten =  tf.keras.layers.Flatten()
         self.dense = tf.keras.layers.Dense(1, weights=[self.time_loss_weights, np.zeros(1)], trainable=False)
 
-        # self.optimizer = tf.keras.optimizers.Adam()
-        # self.mae_loss = tf.keras.losses.MeanAbsoluteError()
-
-        #self.metric_loss = tf.keras.metrics.Mean(name="loss")
 
     @tf.function
     def call(self, input, training=False):
@@ -44,6 +40,8 @@ class PredNetModel(models.Model):
 
     @tf.function
     def train_step(self, data):
+        #Override the train_step to make it work with both custom traning loops and model.fit() 
+        #Thanks to this, the PredNet can work on all modes seemlesly without having to define a new architecture when changing to inference/prediction mode
         x, target = data
         with tf.GradientTape() as tape:
             all_error = self(x, training = True) #set traning = True to get errors as output
@@ -67,12 +65,9 @@ class PredNetModel(models.Model):
         
         return {m.name: m.result() for m in self.metrics}
     
-    # @property
-    # def metrics(self):
-    #     return [self.metric_loss]
-    
     @tf.function
     def test_step(self, data):
+        # Similarly for the test_step. Traditionally traning would be set to false, but since for here it works to change the output to error, we set to true to evaluate loss performance.
         x_val, target_val = data
         all_error_val = self(x_val, training = True)
         #apply the additional error computations
