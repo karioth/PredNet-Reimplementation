@@ -111,3 +111,34 @@ def visualize_sequence(dataset, how_many=3, sequence_length=10):
             ax.axis('off')
         plt.show()
         
+def evaluate_mse(X_test, X_hat):
+    # Compare MSE of PredNet predictions vs. using last frame
+    mse_model = np.mean((X_test[:, 1:] - X_hat[:, 1:]) ** 2)  # look at all timesteps except the first
+    mse_prev = np.mean((X_test[:, :-1] - X_test[:, 1:]) ** 2)
+
+    print("Model MSE: %f" % mse_model)
+    print("Previous Frame MSE: %f" % mse_prev)
+    
+    return mse_model, mse_prev
+
+def visualize_predictions(X_test, X_hat, nt, n_plot=5):
+    # Plot some predictions
+    aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
+    fig, axs = plt.subplots(n_plot, nt, figsize=(nt, n_plot * aspect_ratio), gridspec_kw={'wspace': 0, 'hspace': 0.1})
+
+    plot_idx = np.random.permutation(X_test.shape[0])[:n_plot]
+    for i, idx in enumerate(plot_idx):
+        for t in range(nt):
+            axs[i, t].imshow(X_test[idx, t], interpolation='none')
+            axs[i, t].axis('off')
+            if t == 0:
+                axs[i, t].set_ylabel('Actual', fontsize=10)
+
+            axs[i + n_plot, t].imshow(X_hat[idx, t], interpolation='none')
+            axs[i + n_plot, t].axis('off')
+            if t == 0:
+                axs[i + n_plot, t].set_ylabel('Predicted', fontsize=10)
+
+    plt.tight_layout()
+    plt.show()
+        
