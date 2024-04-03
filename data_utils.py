@@ -96,7 +96,7 @@ def visualize_sequence(dataset, how_many=3, sequence_length=10):
         None
     """
     # Fetch sequence from the dataset
-    for sequence, target in dataset.take(how_many):
+    for sequence in dataset.take(how_many):
         # Assuming the dataset yields batches of shape [batch_size, sequence_length, height, width, channels]
         first_sequence = (sequence[0][0].numpy() * 255).astype(np.uint8)  # Convert the first sequence to a NumPy array for visualization
         print('sequence extracted')
