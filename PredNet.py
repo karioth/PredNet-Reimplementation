@@ -21,7 +21,7 @@ class PredNet_Cell(layers.Layer):
         self.R_filt_size = Ahat_filt_size
 
       #Start builing the modules on this layer:
-      #For a -- Computes the target, does not apply if we are at the bottom layer
+      #For a -- Computes the target, does not build if we are at the bottom layer
         self.conv_a = layers.Conv2D(filters = self.stack_size, kernel_size = self.A_filt_size, padding='same', activation = 'relu')
         self.pool_a = layers.MaxPooling2D()
 
@@ -29,7 +29,6 @@ class PredNet_Cell(layers.Layer):
         self.conv_a_hat = layers.Conv2D(filters = self.stack_size, kernel_size = self.Ahat_filt_size, padding='same', activation = 'relu')
 
       #for r -- computes the representation used to make a prediction
-        #self.convlstmcell = ConvLSTM2DCell(filters=self.R_stack_size, kernel_size=self.R_filt_size, padding='same', activation='relu', strides=(1, 1))
         self.convlstmcell = ConvLSTM2DCell(filters=self.R_stack_size, kernel_size=self.R_filt_size, padding='same', activation='tanh', recurrent_activation='hard_sigmoid', strides=(1, 1))
         self.upsample = layers.UpSampling2D(size=(2, 2))
 
@@ -211,7 +210,7 @@ class StackPredNet(layers.StackedRNNCells):
       return [r_state_sizes, c_state_sizes, e_state_sizes]
 
     def call(self, input, states, training = False):
-        ''' Equivalent to the step function in the original implementation. Handles the dynamics across cell layers of the PredNet'''
+        ''' Equivalent to the step function in the original implementation. Handles the top-down and bottom-up dynamics across cells/layers of the PredNet'''
         # We disentangle the states
         prev_r_states = states[0]
         prev_c_states = states[1]
