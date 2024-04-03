@@ -89,10 +89,19 @@ def make_dataset(folder_paths, sequence_length, batch_size, target_size, shuffle
 
     # Batch sequences across all videos
     batched_dataset = all_videos_dataset.batch(batch_size, drop_remainder=True)
+
+    
     # Map the set_output_mode function over the dataset
     # i think this could be done differently but this way it works with the existing code
     batched_dataset = batched_dataset.map(lambda batch_x: set_output_mode(batch_x, output_mode=output_mode))
-    batched_dataset = batched_dataset.prefetch(tf.data.AUTOTUNE)
 
+    def set_shape(batch_x, batch_y):
+        batch_x.set_shape([None, sequence_length, *target_size, 3])
+        batch_y.set_shape([None])  # Assuming batch_y is a 1D tensor with the batch size dimension only
+        return batch_x, batch_y
+    # After batching dataset, apply the shape setting function
+    batched_dataset = batched_dataset.map(set_shape)
+
+    batched_dataset = batched_dataset.prefetch(tf.data.AUTOTUNE)
 
     return batched_dataset
