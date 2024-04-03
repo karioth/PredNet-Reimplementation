@@ -41,14 +41,13 @@ class SequenceGenerator: #used for hkl data files like used in the original data
         while True:
             for idx in self.possible_starts:
                 sequence = self.X[idx:idx+self.nt]
-                #target = 0.0
-                yield sequence#, target
+                yield sequence
     
     # Create all sequences (optional utility function for testing predictions)
     def create_all(self):
         X_all = np.zeros((self.N_sequences, self.nt) + self.im_shape, np.float32)
         for i, idx in enumerate(self.possible_starts):
-            X_all[i] = self.X[idx:idx+self.nt]
+            X_all[i] = (self.X[idx:idx+self.nt]) / 255.0 # normalize 
         return X_all
 
     def _calculate_unique_starts(self):
@@ -66,28 +65,6 @@ class SequenceGenerator: #used for hkl data files like used in the original data
         return self.dataset
 
 
-def prepare_data(dataset, batch_size): # Dataset should contain image sequences with shape (nt, height, width, n_channels)
-  #TODO: - check if the dataset already have targets, if so, remove them to fit self-supervised objective
-  # - check that the img size in the sequences are correct and divisible by  2^(nb of layers - 1) because of the cyclical 2x2 max-pooling and upsampling operations.
-  # reize accordingly
-  # -- find a way to add conditionals while still working with dataset.apply() for tensorflow  -- otherwise it overloads the memory.
-  # e.g., add target should be a conditional, since it is not necessary for test evaluation. Similarly for resizing, only if it is necessary.
-  # -- check that the nt is correct, if not shorten to the desired nt. If nt is to short, raise a value error flag and ask user to adapt the seq lenght expected. 
-  #convert data and normalize
-  cast = lambda seq: tf.cast(seq, tf.float32)
-  dataset = dataset.map(cast, num_parallel_calls=tf.data.AUTOTUNE)
-  norm = lambda seq: (seq/255.)
-  dataset = dataset.map(norm, num_parallel_calls=tf.data.AUTOTUNE)
-  # add 0s as targets, since the goal is to minimize the output of the network during traning (weighted error) to 0. 
-  add_target = lambda seq: (seq, 0.0)
-  dataset = dataset.map(add_target, num_parallel_calls=tf.data.AUTOTUNE)
-
-  #shuffle batch prefetch
-  dataset = dataset.shuffle(2000)
-  dataset = dataset.batch(batch_size) 
-  dataset = dataset.prefetch(tf.data.AUTOTUNE)
-  
-  return dataset
 
 def visualize_sequences_as_gif(dataset, num=3):
     """
@@ -97,7 +74,7 @@ def visualize_sequences_as_gif(dataset, num=3):
     num: number of sequences to be plotted.  
     """
     #Fetch sequence from the dataset
-    for sequence in dataset.take(num):
+    for sequence, target in dataset.take(num):
         first_sequence = (sequence[0][0].numpy() * 255).astype(np.uint8)
         # Create an animated GIF with looping
         with imageio.get_writer('sequence.gif', mode='I', duration=0.3, loop=0) as writer:
@@ -128,7 +105,7 @@ def visualize_sequence(dataset, how_many=3, sequence_length=10):
         None
     """
     # Fetch sequence from the dataset
-    for sequence in dataset.take(how_many):
+    for sequence, target in dataset.take(how_many):
         # Assuming the dataset yields batches of shape [batch_size, sequence_length, height, width, channels]
         first_sequence = (sequence[0][0].numpy() * 255).astype(np.uint8)  # Convert the first sequence to a NumPy array for visualization
         # to visualize the first sequence in the batch
