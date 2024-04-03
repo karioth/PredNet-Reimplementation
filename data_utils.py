@@ -117,5 +117,32 @@ def visualize_sequences_as_gif(dataset, num=3):
             ax.imshow(first_sequence[i].astype("uint8"))
             ax.axis('off')
         plt.show()
-        
+
+
+def visualize_sequence(dataset, how_many=3, sequence_length=10):
+    """
+    Visualizes a sequence of images from a dataset.
+
+    Args:
+        dataset (tf.data.Dataset): The dataset containing the image sequences.
+        how_many (int, optional): The number of sequences to visualize. Defaults to 3
+        sequence_length (int, optional): The length of each sequence. Defaults to 10.
+
+    Returns:
+        None
+    """
+    # Fetch sequence from the dataset
+    for sequence in dataset.take(how_many):
+        # Assuming the dataset yields batches of shape [batch_size, sequence_length, height, width, channels]
+        first_sequence = (sequence[0][0].numpy() * 255).astype(np.uint8)  # Convert the first sequence to a NumPy array for visualization
+        # to visualize the first sequence in the batch
+        visualize_sequence_as_gif(first_sequence)
+        # `first_sequence` shape is (sequence_length, image_height, image_width, channels)
+        print("Shape of the sequence:", first_sequence.shape)
+
+        fig, axes = plt.subplots(1, sequence_length, figsize=(20, 2))
+        for i, ax in enumerate(axes):
+            ax.imshow(first_sequence[i].astype("uint8"))
+            ax.axis('off')
+        plt.show()
         
