@@ -111,12 +111,17 @@ def visualize_sequence(dataset, how_many=3, sequence_length=10):
             ax.axis('off')
         plt.show()
         
-def evaluate_mse(X_test, X_hat):
+def evaluate_mse(X_test, X_hat, X_hat_ori = None):
     # Compare MSE of PredNet predictions vs. using last frame
+    if X_hat_ori is not None:
+        mse_model_ori = np.mean((X_test[:, 1:] - X_hat_ori[:, 1:]) ** 2)      
     mse_model = np.mean((X_test[:, 1:] - X_hat[:, 1:]) ** 2)  # look at all timesteps except the first
     mse_prev = np.mean((X_test[:, :-1] - X_test[:, 1:]) ** 2)
 
     print("Model MSE: %f" % mse_model)
+    if X_hat_ori is not None:
+        print("Original Model MSE: %f" % mse_model_ori)
+    
     print("Previous Frame MSE: %f" % mse_prev)
     
     return mse_model, mse_prev
