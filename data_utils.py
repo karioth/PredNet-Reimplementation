@@ -5,7 +5,11 @@ import numpy as np
 import imageio
 import IPython.display as display
 import tensorflow as tf
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
 
 class SequenceGenerator: #used for hkl data files like used in the original data pipeline. 
     def __init__(self, data_file, source_file, nt, sequence_start_mode='all', shuffle=False):
@@ -126,6 +130,37 @@ def evaluate_mse(X_test, X_hat, X_hat_ori = None):
     
     return mse_model, mse_prev
 
+def plot_predicted(X_hat, X_test, X_hat_ori = None, nt=10, n_plot=5):
+    
+    aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
+    plt.figure(figsize = (nt, 2*aspect_ratio))
+    gs = gridspec.GridSpec(2, nt)
+    gs.update(wspace=0., hspace=0.)
+    plot_idx = np.random.permutation(X_test.shape[0])[:n_plot]
+    
+    for i in plot_idx:
+        for t in range(nt):
+            plt.subplot(gs[t])
+            plt.imshow(X_test[i, t], interpolation='none')
+            plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
+            if t == 0: plt.ylabel('Actual', fontsize=10)
+    
+            plt.subplot(gs[t + nt])
+            plt.imshow(X_hat[i, t], interpolation='none')
+            plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
+            if t == 0: plt.ylabel('Predicted', fontsize=10)
+
+            if X_hat_ori is not None:
+                plt.subplot(gs[t + 2*nt])
+                plt.imshow(X_hat_ori[i, t], interpolation='none')
+                plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
+                if t == 0: plt.ylabel('Actual', fontsize=10)
+
+        # Display the plot directly in the notebook
+        plt.show()
+        plt.clf()
+    
+    
 def visualize_predictions(X_test, X_hat, nt, n_plot=5):
     # Plot some predictions
     aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
