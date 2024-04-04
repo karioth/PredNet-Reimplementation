@@ -1,6 +1,6 @@
 import numpy as np
-import tensorflow as tf
 import os
+import tensorflow as tf
 from keras import backend as K
 from keras import activations
 from keras.layers import Conv2D, UpSampling2D, MaxPooling2D, Layer, InputSpec
@@ -511,7 +511,7 @@ class PredNet(Recurrent):
                     stack_size = self.stack_sizes[l]
                 output_size = stack_size * nb_row * nb_col  # flattened size
 
-                reducer = K.zeros((input_shape[self.channel_axis], output_size)) # (nb_channels, output_size)
+                reducer = tf.zeros((input_shape[self.channel_axis], output_size)) # (nb_channels, output_size)
                 initial_state = K.dot(base_initial_state, reducer) # (samples, output_size)
                 if self.data_format == 'channels_first':
                     output_shp = (-1, stack_size, nb_row, nb_col)
