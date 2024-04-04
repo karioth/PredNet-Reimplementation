@@ -1,10 +1,10 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Layer
-import tensorflow.keras.backend as K
+import os
+from keras import backend as K
 from keras import activations
-from keras.layers import Conv2D, UpSampling2D, MaxPooling2D
-from tensorflow.keras.layers import InputSpec
+from keras.layers import Conv2D, UpSampling2D, MaxPooling2D, Layer, InputSpec
+from keras.legacy.interfaces import generate_legacy_interface, recurrent_args_preprocessor
 
 class Recurrent(Layer):
     """Abstract base class for recurrent layers.
@@ -360,6 +360,20 @@ class Recurrent(Layer):
 
 
 
+legacy_prednet_support = generate_legacy_interface(
+    allowed_positional_args=['stack_sizes', 'R_stack_sizes',
+                            'A_filt_sizes', 'Ahat_filt_sizes', 'R_filt_sizes'],
+    conversions=[('dim_ordering', 'data_format'),
+                 ('consume_less', 'implementation')],
+    value_conversions={'dim_ordering': {'tf': 'channels_last',
+                                        'th': 'channels_first',
+                                        'default': None},
+                        'consume_less': {'cpu': 0,
+                                        'mem': 1,
+                                        'gpu': 2}},
+    preprocessor=recurrent_args_preprocessor)
+
+
 class PredNet(Recurrent):
     '''PredNet architecture - Lotter 2016.
         Stacked convolutional LSTM inspired by predictive coding principles.
@@ -412,6 +426,7 @@ class PredNet(Recurrent):
         - [Convolutional LSTM network: a machine learning approach for precipitation nowcasting](http://arxiv.org/abs/1506.04214)
         - [Predictive coding in the visual cortex: a functional interpretation of some extra-classical receptive-field effects](http://www.nature.com/neuro/journal/v2/n1/pdf/nn0199_79.pdf)
     '''
+    @legacy_prednet_support
     def __init__(self, stack_sizes, R_stack_sizes,
                  A_filt_sizes, Ahat_filt_sizes, R_filt_sizes,
                  pixel_max=1., error_activation='relu', A_activation='relu',
@@ -480,8 +495,8 @@ class PredNet(Recurrent):
 
     def get_initial_state(self, x):
         input_shape = self.input_spec[0].shape
-        init_nb_row = input_shape[-3]
-        init_nb_col = input_shape[-2]
+        init_nb_row = input_shape[self.row_axis]
+        init_nb_col = input_shape[self.column_axis]
 
         base_initial_state = K.zeros_like(x)  # (samples, timesteps) + image_shape
         non_channel_axis = -1 if self.data_format == 'channels_first' else -2
@@ -508,7 +523,7 @@ class PredNet(Recurrent):
                     stack_size = self.stack_sizes[l]
                 output_size = stack_size * nb_row * nb_col  # flattened size
 
-                reducer = tf.zeros((input_shape[self.channel_axis], output_size)) # (nb_channels, output_size)
+                reducer = K.zeros((input_shape[self.channel_axis], output_size)) # (nb_channels, output_size)
                 initial_state = K.dot(base_initial_state, reducer) # (samples, output_size)
                 if self.data_format == 'channels_first':
                     output_shp = (-1, stack_size, nb_row, nb_col)
@@ -517,7 +532,7 @@ class PredNet(Recurrent):
                 initial_state = K.reshape(initial_state, output_shp)
                 initial_states += [initial_state]
 
-        if K.backend() == 'theano':
+        if K._BACKEND == 'theano':
             from theano import tensor as T
             # There is a known issue in the Theano scan op when dealing with inputs whose shape is 1 along a dimension.
             # In our case, this is a problem when training on grayscale images, and the below line fixes it.
@@ -545,7 +560,7 @@ class PredNet(Recurrent):
         self.upsample = UpSampling2D(data_format=self.data_format)
         self.pool = MaxPooling2D(data_format=self.data_format)
 
-        self._trainable_weights = []
+        self.trainable_weights = []
         nb_row, nb_col = (input_shape[-2], input_shape[-1]) if self.data_format == 'channels_first' else (input_shape[-3], input_shape[-2])
         for c in sorted(self.conv_layers.keys()):
             for l in range(len(self.conv_layers[c])):
@@ -562,7 +577,7 @@ class PredNet(Recurrent):
                 if self.data_format == 'channels_last': in_shape = (in_shape[0], in_shape[2], in_shape[3], in_shape[1])
                 with K.name_scope('layer_' + c + '_' + str(l)):
                     self.conv_layers[c][l].build(in_shape)
-                self._trainable_weights += self.conv_layers[c][l].trainable_weights
+                self.trainable_weights += self.conv_layers[c][l].trainable_weights
 
         self.states = [None] * self.nb_layers*3
 
@@ -637,7 +652,6 @@ class PredNet(Recurrent):
                     all_error = layer_error if l == 0 else K.concatenate((all_error, layer_error), axis=-1)
                 if self.output_mode == 'error':
                     output = all_error
-                    print('Output shape:', all_error.shape)
                 else:
                     output = K.concatenate((K.batch_flatten(frame_prediction), all_error), axis=-1)
 
