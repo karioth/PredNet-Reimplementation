@@ -8,7 +8,7 @@ from keras.models import Model, model_from_json
 import os
 
 
-class Recurrent(Layer):
+class Recurrent(Layer): ## deprecated Recurrent class 
     """Abstract base class for recurrent layers.
 
     Do not use in a model -- it's not a valid layer!
@@ -487,7 +487,6 @@ class PredNet(Recurrent):
         init_nb_col = input_shape[self.column_axis]
 
         base_initial_state = K.zeros_like(x)  # (samples, timesteps) + image_shape
-        print('Dataformat:', self.data_format)
         non_channel_axis = -1 if self.data_format == 'channels_first' else -2
         for _ in range(2):
             base_initial_state = K.sum(base_initial_state, axis=non_channel_axis)
@@ -546,7 +545,6 @@ class PredNet(Recurrent):
             if l < self.nb_layers - 1:
                 self.conv_layers['a'].append(Conv2D(self.stack_sizes[l+1], self.A_filt_sizes[l], padding='same', activation=self.A_activation, data_format=self.data_format))
 
-        print('Dataformat', self.data_format)
         self.upsample = UpSampling2D(data_format=self.data_format)
         self.pool = MaxPooling2D(data_format=self.data_format)
 
@@ -576,7 +574,6 @@ class PredNet(Recurrent):
             self.states += [None] * 2  # [previous frame prediction, timestep]
 
     def step(self, a, states):
-        print('A format', a.shape)
         r_tm1 = states[:self.nb_layers]
         c_tm1 = states[self.nb_layers:2*self.nb_layers]
         e_tm1 = states[2*self.nb_layers:3*self.nb_layers]
