@@ -3,7 +3,7 @@ import os
 import tensorflow as tf
 from keras import backend as K
 from keras import activations
-from keras.layers import Conv2D, UpSampling2D, MaxPooling2D, Layer, InputSpec
+from keras.layers import Conv2D, UpSampling2D, MaxPooling2D, Layer, InputSpec, Input
 from keras.models import Model, model_from_json
 import os
 
@@ -680,3 +680,17 @@ def load_ori_prednet(DIR):
     ori_model.load_weights(ori_weights_file)
 
     return ori_model
+
+def switch_to_testing(model, nt=10):
+    # Create testing model (to output predictions)
+    layer_config = model.layers[1].get_config()
+    layer_config['output_mode'] = 'prediction'
+    data_format = layer_config['data_format'] if 'data_format' in layer_config else layer_config['dim_ordering']
+    test_prednet = PredNet(weights=model.layers[1].get_weights(), **layer_config)
+    input_shape = list(train_model.layers[0].batch_input_shape[1:])
+    input_shape[0] = nt
+    inputs = Input(shape=tuple(input_shape))
+    predictions = test_prednet(inputs)
+    test_model = Model(inputs=inputs, outputs=predictions)
+
+    return test_model
