@@ -545,7 +545,7 @@ class PredNet(Recurrent):
         self.upsample = UpSampling2D(data_format=self.data_format)
         self.pool = MaxPooling2D(data_format=self.data_format)
 
-        self.trainable_weights = []
+        self._trainable_weights = []
         nb_row, nb_col = (input_shape[-2], input_shape[-1]) if self.data_format == 'channels_first' else (input_shape[-3], input_shape[-2])
         for c in sorted(self.conv_layers.keys()):
             for l in range(len(self.conv_layers[c])):
@@ -562,7 +562,7 @@ class PredNet(Recurrent):
                 if self.data_format == 'channels_last': in_shape = (in_shape[0], in_shape[2], in_shape[3], in_shape[1])
                 with K.name_scope('layer_' + c + '_' + str(l)):
                     self.conv_layers[c][l].build(in_shape)
-                self.trainable_weights += self.conv_layers[c][l].trainable_weights
+                self._trainable_weights += self.conv_layers[c][l].trainable_weights
 
         self.states = [None] * self.nb_layers*3
 
