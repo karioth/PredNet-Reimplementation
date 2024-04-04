@@ -448,7 +448,7 @@ class PredNet(Recurrent):
         self.extrap_start_time = extrap_start_time
 
         assert data_format in {'channels_last', 'channels_first'}, 'data_format must be in {channels_last, channels_first}'
-        self.data_format = 'channels_last'
+        self.data_format = data_format
         self.channel_axis = -3 if data_format == 'channels_first' else -1
         self.row_axis = -2 if data_format == 'channels_first' else -3
         self.column_axis = -1 if data_format == 'channels_first' else -2
