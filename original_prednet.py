@@ -4,6 +4,9 @@ import os
 from keras import backend as K
 from keras import activations
 from keras.layers import Conv2D, UpSampling2D, MaxPooling2D, Layer, InputSpec
+from keras.models import Model, model_from_json
+import os
+
 
 class Recurrent(Layer):
     """Abstract base class for recurrent layers.
@@ -661,3 +664,19 @@ class PredNet(Recurrent):
                   'output_mode': self.output_mode}
         base_config = super(PredNet, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+
+def load_ori_prednet(dir):
+    
+    ori_weights_file = os.path.join(DIR, 'tensorflow_weights/prednet_kitti_weights.hdf5')
+    ori_json_file = os.path.join(DIR, 'prednet_kitti_model.json')
+
+    # Load trained model
+    f = open(ori_json_file, 'r')
+    json_string = f.read()
+    f.close()
+    ori_model = model_from_json(json_string, custom_objects = {'PredNet': PredNet})
+    ori_model.load_weights(ori_weights_file)
+
+    return ori_model
