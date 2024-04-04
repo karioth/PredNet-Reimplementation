@@ -121,14 +121,13 @@ def evaluate_mse(X_test, X_hat, X_hat_ori = None):
         mse_model_ori = np.mean((X_test[:, 1:] - X_hat_ori[:, 1:]) ** 2)      
     mse_model = np.mean((X_test[:, 1:] - X_hat[:, 1:]) ** 2)  # look at all timesteps except the first
     mse_prev = np.mean((X_test[:, :-1] - X_test[:, 1:]) ** 2)
-
+    
+    print("Previous Frame MSE: %f" % mse_prev)
     print("Model MSE: %f" % mse_model)
     if X_hat_ori is not None:
         print("Original Model MSE: %f" % mse_model_ori)
     
-    print("Previous Frame MSE: %f" % mse_prev)
-    
-    return mse_model, mse_prev
+    return mse_prev, mse_model
 
 def plot_predicted(X_hat, X_test, X_hat_ori = None, nt=10, n_plot=5):
     
@@ -154,7 +153,7 @@ def plot_predicted(X_hat, X_test, X_hat_ori = None, nt=10, n_plot=5):
                 plt.subplot(gs[t + 2*nt])
                 plt.imshow(X_hat_ori[i, t], interpolation='none')
                 plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
-                if t == 0: plt.ylabel('Actual', fontsize=10)
+                if t == 0: plt.ylabel('Predicted_Original', fontsize=10)
 
         # Display the plot directly in the notebook
         plt.show()
