@@ -4,7 +4,6 @@ import os
 from keras import backend as K
 from keras import activations
 from keras.layers import Conv2D, UpSampling2D, MaxPooling2D, Layer, InputSpec
-from keras.legacy.interfaces import generate_legacy_interface, recurrent_args_preprocessor
 
 class Recurrent(Layer):
     """Abstract base class for recurrent layers.
@@ -360,19 +359,6 @@ class Recurrent(Layer):
 
 
 
-legacy_prednet_support = generate_legacy_interface(
-    allowed_positional_args=['stack_sizes', 'R_stack_sizes',
-                            'A_filt_sizes', 'Ahat_filt_sizes', 'R_filt_sizes'],
-    conversions=[('dim_ordering', 'data_format'),
-                 ('consume_less', 'implementation')],
-    value_conversions={'dim_ordering': {'tf': 'channels_last',
-                                        'th': 'channels_first',
-                                        'default': None},
-                        'consume_less': {'cpu': 0,
-                                        'mem': 1,
-                                        'gpu': 2}},
-    preprocessor=recurrent_args_preprocessor)
-
 
 class PredNet(Recurrent):
     '''PredNet architecture - Lotter 2016.
@@ -426,7 +412,6 @@ class PredNet(Recurrent):
         - [Convolutional LSTM network: a machine learning approach for precipitation nowcasting](http://arxiv.org/abs/1506.04214)
         - [Predictive coding in the visual cortex: a functional interpretation of some extra-classical receptive-field effects](http://www.nature.com/neuro/journal/v2/n1/pdf/nn0199_79.pdf)
     '''
-    @legacy_prednet_support
     def __init__(self, stack_sizes, R_stack_sizes,
                  A_filt_sizes, Ahat_filt_sizes, R_filt_sizes,
                  pixel_max=1., error_activation='relu', A_activation='relu',
