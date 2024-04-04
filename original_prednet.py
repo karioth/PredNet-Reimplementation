@@ -667,7 +667,7 @@ class PredNet(Recurrent):
 
 
 
-def load_ori_prednet(dir):
+def load_ori_prednet(DIR):
     
     ori_weights_file = os.path.join(DIR, 'tensorflow_weights/prednet_kitti_weights.hdf5')
     ori_json_file = os.path.join(DIR, 'prednet_kitti_model.json')
