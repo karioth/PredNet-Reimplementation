@@ -129,7 +129,7 @@ def evaluate_mse(X_test, X_hat, X_hat_ori = None):
     
     return mse_prev, mse_model
 
-def plot_predicted(X_hat, X_test, X_hat_ori = None, nt=10, n_plot=5):
+def plot_predicted(X_test, X_hat, X_hat_ori = None, nt=10, n_plot=5):
     
     aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
     plt.figure(figsize = (nt, 2*aspect_ratio))
