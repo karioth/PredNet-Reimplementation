@@ -9,6 +9,13 @@ class PredNetModel(models.Model):
     ''' Puts together a classical version of the PredNet architecture using the modern modular implementation'''
     def __init__(self, stack_sizes, R_stack_sizes, A_filt_sizes, Ahat_filt_sizes, R_filt_sizes, layer_loss_weights, time_loss_weights,**kwargs):
         super(PredNetModel, self).__init__(**kwargs)
+        
+        self.stack_sizes = stack_sizes
+        self.R_stack_sizes = R_stack_sizes
+        self.A_filt_sizes = A_filt_sizes
+        self.Ahat_filt_sizes = Ahat_filt_sizes
+        self.R_filt_sizes = R_filt_sizes
+        
         self.cells = [
                 PredNet_Cell(
                     stack_size=stack_size,
@@ -18,7 +25,7 @@ class PredNetModel(models.Model):
                     R_filt_size=R_filt_size)
 
                 for stack_size, R_stack_size, A_filt_size, Ahat_filt_size, R_filt_size in zip(
-                    stack_sizes, R_stack_sizes, A_filt_sizes, Ahat_filt_sizes, R_filt_sizes)] # initialize the cells according to the hyperparameters.
+                    self.stack_sizes, self.R_stack_sizes, self.A_filt_sizes, self.Ahat_filt_sizes, self.R_filt_sizes)] # initialize the cells according to the hyperparameters.
 
         # self.nb_layers = len(stack_sizes)
         self.layer_loss_weights = layer_loss_weights # weighting for each layer in final loss.
@@ -87,6 +94,11 @@ class PredNetModel(models.Model):
         cell_configs = [cell.get_config() for cell in self.cells]
         config = super(PredNetModel, self).get_config()
         config.update({
+            'stack_sizes': self.stack_sizes,
+            'R_stack_sizes': self.R_stack_sizes,
+            'A_filt_sizes': self.A_filt_sizes,
+            'Ahat_filt_sizes': self.Ahat_filt_sizes,
+            'R_filt_sizes': self.R_filt_sizes,
             'cells': cell_configs,  # Store the configurations of the cells
             'layer_loss_weights': self.layer_loss_weights,
             'time_loss_weights': self.time_loss_weights,
