@@ -91,7 +91,7 @@ class PredNetModel(models.Model):
         return {m.name: m.result() for m in self.metrics}
     
     def get_config(self):
-        cell_configs = [cell.get_config() for cell in self.cells]
+        #cell_configs = [cell.get_config() for cell in self.cells]
         config = super(PredNetModel, self).get_config()
         config.update({
             'stack_sizes': self.stack_sizes,
@@ -99,7 +99,7 @@ class PredNetModel(models.Model):
             'A_filt_sizes': self.A_filt_sizes,
             'Ahat_filt_sizes': self.Ahat_filt_sizes,
             'R_filt_sizes': self.R_filt_sizes,
-            'cells': cell_configs,  # Store the configurations of the cells
+            #'cells': cell_configs,  # Store the configurations of the cells
             'layer_loss_weights': self.layer_loss_weights,
             'time_loss_weights': self.time_loss_weights,
         })
@@ -107,7 +107,7 @@ class PredNetModel(models.Model):
 
     @classmethod
     def from_config(cls, config):
-        cells = [PredNet_Cell.from_config(cell_config) for cell_config in config['cells']]
-        return cls(cells, **config)
+        #cells = [PredNet_Cell.from_config(cell_config) for cell_config in config['cells']]
+        return cls(**config)
         
         
