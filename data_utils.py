@@ -133,7 +133,7 @@ def plot_predicted(X_hat, X_test, X_hat_ori = None, nt=10, n_plot=5):
     
     aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
     plt.figure(figsize = (nt, 2*aspect_ratio))
-    gs = gridspec.GridSpec(2, nt)
+    gs = gridspec.GridSpec(3, nt)
     gs.update(wspace=0., hspace=0.)
     plot_idx = np.random.permutation(X_test.shape[0])[:n_plot]
     
