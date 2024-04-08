@@ -8,6 +8,7 @@ from tensorflow.python.keras.engine.input_spec import InputSpec
 from tensorflow.python.keras.layers.recurrent import RNN
 from tensorflow.python.keras import backend as K
 
+@tf.keras.saving.register_keras_serializable(package="PredNet_Cell")
 class PredNet_Cell(layers.Layer):
   ''' wraps the ConvLSTM2DCell to incorporate the targets (A), predictions (A_hat) and error (E) computations involved in a single step of a PredNet layer'''
   def __init__(self, stack_size, R_stack_size, A_filt_size, Ahat_filt_size, R_filt_size,**kwargs):
@@ -118,7 +119,7 @@ class PredNet_Cell(layers.Layer):
   def from_config(cls, config):
         return cls(**config)
 
-
+@tf.keras.saving.register_keras_serializable(package="StackedRNNCells")
 class StackPredNet(layers.StackedRNNCells):
     ''' Base Class for stacking PredNet Cells.
     Takes as input a list of PredNet_Cells and stacks them to handle their correct hierarchical interaction on every step of the sequence'''
@@ -262,7 +263,8 @@ class StackPredNet(layers.StackedRNNCells):
            output = frame_prediction # for inference we output the frame prediction.
 
         return output, new_states_per_layer
-
+      
+@tf.keras.saving.register_keras_serializable(package="PredNet")
 class PredNet(RNN):
   """Base class for PredNet Architectures. Modifies the ConvRNN2D class to allow (PredNet) cell stacking.
   Only minor changes to the build function and offloading the get_initial_states to the StackPredNet class.
