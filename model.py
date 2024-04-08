@@ -95,7 +95,11 @@ class PredNetModel(models.Model):
 
     @classmethod
     def from_config(cls, config):
-        cells = [PredNet_Cell.from_config(**cell_config) for cell_config in config['cells']]
+        cells = []
+        for cell_config in config['cells']:
+            print(cell_config)
+            cells.append(PredNet_Cell.from_config(**cell_config)                   
+        #cells = [PredNet_Cell.from_config(**cell_config) for cell_config in config['cells']]
         return cls(cells, **config)
         
         
