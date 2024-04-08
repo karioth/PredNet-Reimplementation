@@ -681,14 +681,13 @@ def load_ori_prednet(DIR):
 
     return ori_model
 
-def switch_to_testing(model, nt=10):
+def switch_to_testing(model, input_shape):
     # Create testing model (to output predictions)
     layer_config = model.layers[1].get_config()
     layer_config['output_mode'] = 'prediction'
     data_format = layer_config['data_format'] if 'data_format' in layer_config else layer_config['dim_ordering']
     test_prednet = PredNet(weights=model.layers[1].get_weights(), **layer_config)
-    input_shape = list(model.layers[0].batch_input_shape[1:])
-    input_shape[0] = nt
+    input_shape = input_shape
     inputs = Input(shape=tuple(input_shape))
     predictions = test_prednet(inputs)
     test_model = Model(inputs=inputs, outputs=predictions)
