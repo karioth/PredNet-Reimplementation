@@ -90,22 +90,22 @@ class PredNetModel(models.Model):
         
         return {m.name: m.result() for m in self.metrics}
     
-    def get_config(self):
-        cell_configs = [cell.get_config() for cell in self.cells]
-        prednet_config = self.prednet.get_config()
-        config = super(PredNetModel, self).get_config()
-        config.update({
-            'stack_sizes': self.stack_sizes,
-            'R_stack_sizes': self.R_stack_sizes,
-            'A_filt_sizes': self.A_filt_sizes,
-            'Ahat_filt_sizes': self.Ahat_filt_sizes,
-            'R_filt_sizes': self.R_filt_sizes,
-            'layer_loss_weights': self.layer_loss_weights,
-            'time_loss_weights': self.time_loss_weights,
-            'cells': cell_configs,
-            'prednet': prednet_config,
-        })
-        return config
+    # def get_config(self):
+    #     cell_configs = [cell.get_config() for cell in self.cells]
+    #     prednet_config = self.prednet.get_config()
+    #     config = super(PredNetModel, self).get_config()
+    #     config.update({
+    #         'stack_sizes': self.stack_sizes,
+    #         'R_stack_sizes': self.R_stack_sizes,
+    #         'A_filt_sizes': self.A_filt_sizes,
+    #         'Ahat_filt_sizes': self.Ahat_filt_sizes,
+    #         'R_filt_sizes': self.R_filt_sizes,
+    #         'layer_loss_weights': self.layer_loss_weights,
+    #         'time_loss_weights': self.time_loss_weights,
+    #         'cells': cell_configs,
+    #         'prednet': prednet_config,
+    #     })
+    #     return config
 
     # @classmethod
     # def from_config(cls, config):
