@@ -161,10 +161,10 @@ def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=Fa
         
         if X_hat_ori is None:
             gs = gridspec.GridSpec(2, nt)
+            gs.update(wspace=0., hspace=0.)
         else: 
             gs = gridspec.GridSpec(3, nt)
-        
-        gs.update(wspace=0., hspace=0.)
+            gs.update(wspace=0., hspace=0.)
 
         if gif:
             # Ensure the sequence is in the correct format
