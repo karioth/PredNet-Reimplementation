@@ -212,13 +212,13 @@ def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=Fa
             plt.subplot(gs[1, t])
             plt.imshow(X_hat[i, t], interpolation='none')
             plt.axis('off')
-            if t == 0: plt.title('Predicted', loc='center', y=0)
+            if t == 0: plt.title('Predicted', loc='center')
 
             if X_hat_ori is not None:
                     plt.subplot(gs[2, t])
                     plt.imshow(X_hat_ori[i, t], interpolation='none')
                     plt.axis('off')
-                    if t == 0: plt.ylabel('Predicted_Original', loc='center', y=0)
+                    if t == 0: plt.ylabel('Predicted_Original', loc='center')
 
         if save_results is not None:
             save_path = os.path.join(save_results, f"sequence_{seq_num+1}.png")
