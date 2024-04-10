@@ -101,9 +101,6 @@ def make_dataset(folder_paths, sequence_length, batch_size, target_size, shuffle
     # After batching dataset, apply the shape setting function
     batched_dataset = batched_dataset.map(set_shape)
 
-    # repeat the dataset indefinitely
-    batched_dataset = batched_dataset.repeat(epochs)
-
     batched_dataset = batched_dataset.prefetch(tf.data.AUTOTUNE)
 
     return batched_dataset
