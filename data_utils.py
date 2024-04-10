@@ -129,55 +129,150 @@ def evaluate_mse(X_test, X_hat, X_hat_ori = None):
     
     return mse_prev, mse_model
 
-def plot_predicted(X_test, X_hat, X_hat_ori = None, nt=10, n_plot=5):
+# def plot_predicted(X_test, X_hat, X_hat_ori = None, nt=10, n_plot=5):
     
+#     aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
+#     plt.figure(figsize = (nt, 2*aspect_ratio))
+#     gs = gridspec.GridSpec(3, nt)
+#     gs.update(wspace=0., hspace=0.)
+#     plot_idx = np.random.permutation(X_test.shape[0])[:n_plot]
+    
+#     for i in plot_idx:
+#         for t in range(nt):
+#             plt.subplot(gs[t])
+#             plt.imshow(X_test[i, t], interpolation='none')
+#             plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
+#             if t == 0: plt.ylabel('Actual', fontsize=10)
+    
+#             plt.subplot(gs[t + nt])
+#             plt.imshow(X_hat[i, t], interpolation='none')
+#             plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
+#             if t == 0: plt.ylabel('Predicted', fontsize=10)
+
+#             if X_hat_ori is not None:
+#                 plt.subplot(gs[t + 2*nt])
+#                 plt.imshow(X_hat_ori[i, t], interpolation='none')
+#                 plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
+#                 if t == 0: plt.ylabel('Predicted_Original', fontsize=10)
+
+#         # Display the plot directly in the notebook
+#         plt.show()
+#         plt.clf()
+        
+def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=False, mse=False, n_sequences=3, nt=10):
+    '''
+    Display or save comparison of actual sequences and PredNet predictions.
+
+    Parameters:
+    - X_test: Actual pictures.
+    - X_hat: Predicted pictures.
+    - X_hat_ori: Predicted pictures by the original implementation.
+    - save_results: Directory where results are saved. If no argument is passed, no saving occurs. 
+    - gif: Flag if gif should be shown.
+    - mse: Flag if mse should be printed.
+    - n_sequences: Number of sequences to display or save. Default is 3.
+    - nt: Number of timesteps per sequence. Default is 10.
+    '''
+    if mse:
+        # Calculate MSE for model and previous frame
+        evaluate_mse(X_test, X_hat, X_hat_ori)
+
+    # Ensure the save directory exists
+    if save_results is not None and not os.path.exists(save_results):
+        os.makedirs(save_results)
+
+    # Display or save some predictions
     aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
-    plt.figure(figsize = (nt, 2*aspect_ratio))
-    gs = gridspec.GridSpec(3, nt)
-    gs.update(wspace=0., hspace=0.)
-    plot_idx = np.random.permutation(X_test.shape[0])[:n_plot]
-    
-    for i in plot_idx:
+    plot_idx = np.random.permutation(X_test.shape[0])[:n_sequences]
+
+    for seq_num, i in enumerate(plot_idx):
+        plt.figure(figsize=(nt*2, 4*aspect_ratio))
+        gs = gridspec.GridSpec(2, nt) if X_hat_ori is None else gridspec.GridSpec(3, nt)
+        gs.update(wspace=0., hspace=0.)
+
+        if gif:
+            # Ensure the sequence is in the correct format
+            sequence_test = X_test[i]
+            sequence_pred = X_hat[i]
+            print('Actual')
+            visualize_sequence_as_gif((255 * sequence_test).astype(np.uint8))
+            print('\nPredicted')
+            visualize_sequence_as_gif((255 * sequence_pred).astype(np.uint8))
+            if X_hat_ori is not None:
+                sequence_ori_pred = X_hat_ori[i]
+                print('\nPredicted_Original')
+                visualize_sequence_as_gif((255 * sequence_ori_pred).astype(np.uint8))
+
         for t in range(nt):
-            plt.subplot(gs[t])
+            plt.subplot(gs[0, t])
             plt.imshow(X_test[i, t], interpolation='none')
-            plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
-            if t == 0: plt.ylabel('Actual', fontsize=10)
-    
-            plt.subplot(gs[t + nt])
+            plt.axis('off')
+            if t == 0: plt.title('Actual', loc='center')
+
+            plt.subplot(gs[1, t])
             plt.imshow(X_hat[i, t], interpolation='none')
-            plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
-            if t == 0: plt.ylabel('Predicted', fontsize=10)
+            plt.axis('off')
+            if t == 0: plt.title('Predicted', loc='center', y=0)
 
             if X_hat_ori is not None:
-                plt.subplot(gs[t + 2*nt])
-                plt.imshow(X_hat_ori[i, t], interpolation='none')
-                plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
-                if t == 0: plt.ylabel('Predicted_Original', fontsize=10)
+                    plt.subplot(gs[2, t])
+                    plt.imshow(X_hat_ori[i, t], interpolation='none')
+                    plt.axis('off')
+                    if t == 0: plt.ylabel('Predicted_Original', loc='center', y=0)
 
-        # Display the plot directly in the notebook
-        plt.show()
-        plt.clf()
-    
-    
-def visualize_predictions(X_test, X_hat, nt, n_plot=5):
-    # Plot some predictions
-    aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
-    fig, axs = plt.subplots(n_plot, nt, figsize=(nt, n_plot * aspect_ratio), gridspec_kw={'wspace': 0, 'hspace': 0.1})
+        if save_results is not None:
+            save_path = os.path.join(save_results, f"sequence_{seq_num+1}.png")
+            plt.savefig(save_path)
+            plt.close()  # Close the figure to avoid displaying it in Jupyter notebooks
+            print(f"Saved: {save_path}")
+        else:
+            plt.show()
 
-    plot_idx = np.random.permutation(X_test.shape[0])[:n_plot]
-    for i, idx in enumerate(plot_idx):
-        for t in range(nt):
-            axs[i, t].imshow(X_test[idx, t], interpolation='none')
-            axs[i, t].axis('off')
-            if t == 0:
-                axs[i, t].set_ylabel('Actual', fontsize=10)
+def predict_future_sequence(prednet, X_test, start_idx, n_predictions):
+    """
+    Predicts future frames by iteratively updating the sequence with the last predicted frame,
+    while also constructing the corresponding ground truth sequence.
 
-            axs[i + n_plot, t].imshow(X_hat[idx, t], interpolation='none')
-            axs[i + n_plot, t].axis('off')
-            if t == 0:
-                axs[i + n_plot, t].set_ylabel('Predicted', fontsize=10)
+    Parameters:
+    - prednet: The trained PredNet model.
+    - X_test: Test dataset containing sequences.
+    - start_idx: Index to start the prediction from within the dataset.
+    - n_predictions: The number of future frames to predict beyond the initial sequence.
 
-    plt.tight_layout()
-    plt.show()
-        
+    Returns:
+    - A tuple of two arrays: one containing the predicted frames including images predicted on predicted images,
+      and one containing the actual frames from the dataset for comparison.
+    """
+
+    # Ensure there is a subsequent sequence available for comparison
+    if start_idx >= len(X_test) - 1:
+        raise ValueError("No subsequent sequence available for comparison.")
+    if n_predictions > 9:
+        raise ValueError("Max number of predictions is 9")
+
+    # Get the initial sequence and the next sequence for comparison
+    initial_sequence = np.expand_dims(X_test[start_idx], axis=0)
+    initial_sequence_next = np.expand_dims(X_test[start_idx + 1], axis=0)
+
+    # Start with the initial sequence to accumulate the predictions
+    current_sequence = initial_sequence
+
+    # Variable to store the ground truth frames corresponding to the predictions
+    current_original_seq = initial_sequence
+
+    # Loop to predict each subsequent frame
+    for i in range(n_predictions):
+        # Predict the next set of frames using the current sequence
+        next_prediction = prednet(current_sequence)
+
+        # Take the last frame from the prediction to extend the sequence
+        last_frame_predicted = next_prediction[:, -1:, ...]
+
+        # Concatenate the predicted frame to the sequence and use the last seq_length frames
+        current_sequence = np.concatenate((current_sequence, last_frame_predicted), axis=1)
+
+        # Update the ground truth sequence with the next frame
+        current_original_seq = np.concatenate((current_original_seq, initial_sequence_next[:, i:i+1, ...]), axis=1)
+        #compare_sequences(current_original_seq, next_prediction, RESULTS_SAVE_DIR, save=False, n_sequences=1, nt=10+i)
+
+    return next_prediction, current_original_seq
