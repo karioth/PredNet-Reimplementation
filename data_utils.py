@@ -157,14 +157,12 @@ def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=Fa
     plot_idx = np.random.permutation(X_test.shape[0])[:n_sequences]
 
     for seq_num, i in enumerate(plot_idx):
-        plt.figure(figsize=(nt*2, 4*aspect_ratio))
         
-        if X_hat_ori is None:
-            gs = gridspec.GridSpec(2, nt)
-            gs.update(wspace=0., hspace=0.)
-        else: 
-            gs = gridspec.GridSpec(3, nt)
-            gs.update(wspace=0., hspace=0.)
+        n_plts = 2 if X_hat_ori is None else 3
+        
+        plt.figure(figsize=(nt*2, 4*aspect_ratio))
+        gs = gridspec.GridSpec(n_plts, nt)
+        gs.update(wspace=0., hspace=0.)
 
         if gif:
             # Ensure the sequence is in the correct format
