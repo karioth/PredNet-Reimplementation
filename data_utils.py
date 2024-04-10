@@ -115,20 +115,22 @@ def visualize_sequence(dataset, how_many=3, sequence_length=10):
         
 def evaluate_mse(X_test, X_hat, X_hat_ori = None):
     # Compare MSE of PredNet predictions vs. using last frame
-    if X_hat_ori is not None:
-        mse_model_ori = np.mean((X_test[:, 1:] - X_hat_ori[:, 1:]) ** 2)      
     mse_model = np.mean((X_test[:, 1:] - X_hat[:, 1:]) ** 2)  # look at all timesteps except the first
     mse_prev = np.mean((X_test[:, :-1] - X_test[:, 1:]) ** 2)
     
     print("Previous Frame MSE: %f" % mse_prev)
     print("Model MSE: %f" % mse_model)
+    
     if X_hat_ori is not None:
+        mse_model_ori = np.mean((X_test[:, 1:] - X_hat_ori[:, 1:]) ** 2)  
         print("Original Model MSE: %f" % mse_model_ori)
+        
+        return mse_prev, mse_model, mse_model_ori
     
     return mse_prev, mse_model
 
         
-def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=False, mse=False, n_sequences=3, nt=10):
+def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=False, mse=True, n_sequences=3, nt=10):
     '''
     Display or save comparison of actual sequences and PredNet predictions.
 
@@ -138,7 +140,7 @@ def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=Fa
     - X_hat_ori: Predicted pictures by the original implementation.
     - save_results: Directory where results are saved. If no argument is passed, no saving occurs. 
     - gif: Flag if gif should be shown.
-    - mse: Flag if mse should be printed.
+    - mse: Flag if mean squared errors should be printed.
     - n_sequences: Number of sequences to display or save. Default is 3.
     - nt: Number of timesteps per sequence. Default is 10.
     '''
