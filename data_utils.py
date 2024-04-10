@@ -107,8 +107,6 @@ def visualize_sequence(dataset, how_many=3, sequence_length=10):
         # to visualize the first sequence in the batch
         visualize_sequence_as_gif(first_sequence)
         # `first_sequence` shape is (sequence_length, image_height, image_width, channels)
-        print("Shape of the sequence:", first_sequence.shape)
-
         fig, axes = plt.subplots(1, sequence_length, figsize=(20, 2))
         for i, ax in enumerate(axes):
             ax.imshow(first_sequence[i].astype("uint8"))
@@ -129,35 +127,6 @@ def evaluate_mse(X_test, X_hat, X_hat_ori = None):
     
     return mse_prev, mse_model
 
-# def plot_predicted(X_test, X_hat, X_hat_ori = None, nt=10, n_plot=5):
-    
-#     aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
-#     plt.figure(figsize = (nt, 2*aspect_ratio))
-#     gs = gridspec.GridSpec(3, nt)
-#     gs.update(wspace=0., hspace=0.)
-#     plot_idx = np.random.permutation(X_test.shape[0])[:n_plot]
-    
-#     for i in plot_idx:
-#         for t in range(nt):
-#             plt.subplot(gs[t])
-#             plt.imshow(X_test[i, t], interpolation='none')
-#             plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
-#             if t == 0: plt.ylabel('Actual', fontsize=10)
-    
-#             plt.subplot(gs[t + nt])
-#             plt.imshow(X_hat[i, t], interpolation='none')
-#             plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
-#             if t == 0: plt.ylabel('Predicted', fontsize=10)
-
-#             if X_hat_ori is not None:
-#                 plt.subplot(gs[t + 2*nt])
-#                 plt.imshow(X_hat_ori[i, t], interpolation='none')
-#                 plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
-#                 if t == 0: plt.ylabel('Predicted_Original', fontsize=10)
-
-#         # Display the plot directly in the notebook
-#         plt.show()
-#         plt.clf()
         
 def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=False, mse=False, n_sequences=3, nt=10):
     '''
@@ -187,7 +156,12 @@ def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=Fa
 
     for seq_num, i in enumerate(plot_idx):
         plt.figure(figsize=(nt*2, 4*aspect_ratio))
-        gs = gridspec.GridSpec(2, nt) if X_hat_ori is None else gridspec.GridSpec(3, nt)
+        
+        if X_hat_ori is None:
+            gs = gridspec.GridSpec(2, nt)
+        else: 
+            gs = gridspec.GridSpec(3, nt)
+        
         gs.update(wspace=0., hspace=0.)
 
         if gif:
@@ -212,13 +186,13 @@ def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=Fa
             plt.subplot(gs[1, t])
             plt.imshow(X_hat[i, t], interpolation='none')
             plt.axis('off')
-            if t == 0: plt.title('Predicted', loc='center')
+            if t == 0: plt.title('Predicted', loc='center', y=0)
 
             if X_hat_ori is not None:
-                    plt.subplot(gs[2, t])
-                    plt.imshow(X_hat_ori[i, t], interpolation='none')
-                    plt.axis('off')
-                    if t == 0: plt.ylabel('Predicted_Original', loc='center')
+                plt.subplot(gs[2, t])
+                plt.imshow(X_hat_ori[i, t], interpolation='none')
+                plt.axis('off')
+                if t == 0: plt.title('Predicted_Original', loc='center', y=0)
 
         if save_results is not None:
             save_path = os.path.join(save_results, f"sequence_{seq_num+1}.png")
