@@ -161,7 +161,7 @@ def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=Fa
         
         n_plts = 2 if X_hat_ori is None else 3
         
-        plt.figure(figsize=(nt*2, 4*aspect_ratio))
+        plt.figure(figsize=(nt*2, n_plts*2*aspect_ratio))
         gs = gridspec.GridSpec(n_plts, nt)
         gs.update(wspace=0., hspace=0.)
 
