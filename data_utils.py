@@ -112,6 +112,7 @@ def visualize_sequence(dataset, how_many=3, sequence_length=10):
             ax.imshow(first_sequence[i].astype("uint8"))
             ax.axis('off')
         plt.show()
+        plt.close()
         
 def evaluate_mse(X_test, X_hat, X_hat_ori = None):
     # Compare MSE of PredNet predictions vs. using last frame
@@ -201,6 +202,8 @@ def compare_sequences(X_test, X_hat, X_hat_ori = None, save_results=None, gif=Fa
             print(f"Saved: {save_path}")
         else:
             plt.show()
+            plt.close()
+
 
 def predict_future_sequence(prednet, X_test, start_idx, n_predictions):
     """
