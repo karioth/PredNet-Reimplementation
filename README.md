@@ -31,7 +31,7 @@ cd PredNet_tf
     * Ensure you have Python and TensorFlow installed, and install any additional required packages.
     
 ### Data Preparation
-Use the scripts in '**datapipeline_tf_kitti**' to process your video data. These scripts will format the data correctly for training with the PredNet model.
+Use the scripts in '**datapipeline_tf_kitti**' (see '**testing_kitti_tf_data.ipynb**' as an example) to process your video data. These scripts will format the data correctly for training with the PredNet model.
     
 ### Modifying the Model
 To adjust the model architecture or training process, modify the '**PredNetModel**' class in '**model.py**'. For custom data inputs or formats, update the data pipeline scripts in the '**datapipeline_tf_kitti**' directory.
