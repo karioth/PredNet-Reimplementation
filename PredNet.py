@@ -40,8 +40,8 @@ class PredNet_Cell(layers.Layer):
 
         # Representation computation: ConvLSTM2DCell (activation: tanh, recurrent_activation: hard_sigmoid)
         self.convlstmcell = ConvLSTM2DCell(filters=self.R_stack_size, kernel_size=self.R_filt_size, padding='same', activation='tanh', recurrent_activation='hard_sigmoid')
-
         self.upsample = layers.UpSampling2D(size=(2, 2))
+
         # Error computation: Subtract and ReLU for positive and negative error components
         self.subtract = layers.Subtract()
         self.relu = layers.ReLU()
@@ -114,10 +114,10 @@ class PredNet_Cell(layers.Layer):
             a_hat = tf.minimum(1.0, a_hat)  # Clip predictions to a maximum of 1
 
         # Compute positive and negative prediction errors
-        pos_error = self.substract([a, a_hat])
+        pos_error = self.subtract([a, a_hat])
         pos_error = self.relu(pos_error)
 
-        neg_error = self.substract([a_hat, a])
+        neg_error = self.subtract([a_hat, a])
         neg_error = self.relu(neg_error)
         new_e = tf.concat([pos_error, neg_error], axis=-1) #Concatenate them along the feature dimension to get the error response.
 
