@@ -74,7 +74,7 @@ class PredNetModel(models.Model):
     
     @tf.function
     def test_step(self, data):
-        # Similarly for the test_step. Traditionally traning would be set to false, but since for here it works to change the output to error, we set to true to evaluate loss performance.
+        # Similarly for the test_step. Traditionally traning would be set to false, but since here we use it to change the output to error, we set to true to evaluate loss performance.
         x_val, target_val = data
         all_error_val = self(x_val, training = True)
         #apply the additional error computations
