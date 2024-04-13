@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow.keras import layers
 from tensorflow.python.keras.layers.convolutional_recurrent import ConvLSTM2DCell
 from tensorflow.python.keras.utils import generic_utils
@@ -10,101 +11,127 @@ from tensorflow.python.keras import backend as K
 
 @tf.keras.saving.register_keras_serializable(package="PredNet_Cell")
 class PredNet_Cell(layers.Layer):
-  ''' wraps the ConvLSTM2DCell to incorporate the targets (A), predictions (A_hat) and error (E) computations involved in a single step of a PredNet layer'''
-  def __init__(self, stack_size, R_stack_size, A_filt_size, Ahat_filt_size, R_filt_size,**kwargs):
-        super(PredNet_Cell, self).__init__(**kwargs)
+    """
+    This class represents a cell of the Predictive Coding Network (PredNet) which is responsible for a single timestep.
+    It encapsulates the computations of targets (A), predictions (A_hat), and errors (E) within one PredNet layer.
 
-     #Extract the necessary hyperparameters for this PredNet layer
+    Attributes:
+        stack_size (int): Number of channels in the target/prediction layers.
+        R_stack_size (int): Number of channels in the representation layer.
+        A_filt_size (tuple): Kernel size for the convolutional layer computing the targets.
+        Ahat_filt_size (tuple): Kernel size for the convolutional layer computing the predictions.
+        R_filt_size (tuple): Kernel size for the ConvLSTM2D layer computing the representation.
+    """
+
+    def __init__(self, stack_size, R_stack_size, A_filt_size, Ahat_filt_size, R_filt_size, **kwargs):
+        super(PredNet_Cell, self).__init__(**kwargs)
         self.stack_size = stack_size
         self.R_stack_size = R_stack_size
         self.A_filt_size = A_filt_size
         self.Ahat_filt_size = Ahat_filt_size
-        self.R_filt_size = Ahat_filt_size
+        self.R_filt_size = R_filt_size
 
-      #Start builing the modules on this layer:
-      #For a -- Computes the target, does not build if we are at the bottom layer
-        self.conv_a = layers.Conv2D(filters = self.stack_size, kernel_size = self.A_filt_size, padding='same', activation = 'relu')
+        # Target computation: Convolutional layer (activation: ReLU), does not build if we are at the bottom layer
+        self.conv_a = layers.Conv2D(filters=self.stack_size, kernel_size=self.A_filt_size, padding='same', activation='relu')
         self.pool_a = layers.MaxPooling2D()
 
-      #for a_hat -- computes the prediction
-        self.conv_a_hat = layers.Conv2D(filters = self.stack_size, kernel_size = self.Ahat_filt_size, padding='same', activation = 'relu')
+        # Prediction computation: Convolutional layer (activation: ReLU)
+        self.conv_a_hat = layers.Conv2D(filters=self.stack_size, kernel_size=self.Ahat_filt_size, padding='same', activation='relu')
 
-      #for r -- computes the representation used to make a prediction
-        self.convlstmcell = ConvLSTM2DCell(filters=self.R_stack_size, kernel_size=self.R_filt_size, padding='same', activation='tanh', recurrent_activation='hard_sigmoid', strides=(1, 1))
+        # Representation computation: ConvLSTM2DCell (activation: tanh, recurrent_activation: hard_sigmoid)
+        self.convlstmcell = ConvLSTM2DCell(filters=self.R_stack_size, kernel_size=self.R_filt_size, padding='same', activation='tanh', recurrent_activation='hard_sigmoid')
+
         self.upsample = layers.UpSampling2D(size=(2, 2))
-
-      #for e -- computes the negative and possitive error.
-        self.substract = layers.Subtract()
+        # Error computation: Subtract and ReLU for positive and negative error components
+        self.subtract = layers.Subtract()
         self.relu = layers.ReLU()
 
-  @property
-  def state_size(self):
-    '''returns the state sizes at the corresponding layer'''
-    r_state_size = self.R_stack_size
-    c_state_size = self.R_stack_size
-    e_state_size = self.stack_size*2 # E state is doubled to account for positive and negative error
 
-    return (r_state_size, c_state_size, e_state_size)
+    @property
+    def state_size(self):
+        """ Returns the sizes of the various states maintained by the layer: representation, cell, and error states. """
+        r_state_size = self.R_stack_size  # Representation state size
+        c_state_size = self.R_stack_size  # Cell state size (for LSTM)
+        e_state_size = self.stack_size * 2  # Error state size (positive and negative)
+        return (r_state_size, c_state_size, e_state_size)
 
-  @property
-  def output_size(self):
-    return None
+    @property
+    def output_size(self):
+        """ The layer has no fixed output size due to its dynamic nature. """
+        return None
 
-  def top_down(self, states, top_r = None):
-    '''Custom top down call. It implements the top-down update sequence for this layer.
-      Takes as argument the states computed here on the previous time-step and the top-down feedback (None if we are at the top layer).
-      Uses them to compute the updated r and c states'''
-
-    #Disentangle the states
-    prev_r = states[0]
-    prev_c = states[1]
-    prev_e = states[2]
-
-    if top_r is not None: # we up-sample the top-down feedback to match the the pool in the bottom-up update
-      upsamp_r = self.upsample(top_r)
-      inputs = tf.concat([prev_e, prev_r, upsamp_r], axis=-1) # we use the upsampled top down feedback, the previous error and r representation as inputs to the convlstm cell.
-    else:
-      inputs = tf.concat([prev_e, prev_r], axis=-1) # use only the previous error and r if we are at the top layer.
-
-    new_r, conv_lstm_states = self.convlstmcell(inputs, [prev_r, prev_c]) # we pass the r and c states expected by the ConvLSTM2DCell along with the input.
-    new_c = conv_lstm_states[1]
-
-    return new_r, new_c #return the new new_r state to send as feedback downwards and new new_c state for use on the next time step.
+    def top_down(self, states, top_r=None):
+      """
+      Performs the top-down update sequence for this layer using previous states and top-down feedback.
+      
+      Args:
+          states (tuple): The previous states from this layer.
+          top_r (Tensor, optional): The top-down feedback from the layer above, None if this is the top layer.
   
+      Returns:
+          tuple: Updated states (new_r, new_c) after processing top-down feedback and previous states.
+      """
+      # Unpack the previous states
+      prev_r = states[0]
+      prev_c = states[1]
+      prev_e = states[2]
+  
+      # If there's top-down feedback, upsample and concatenate it with previous states
+      if top_r is not None:
+          upsamp_r = self.upsample(top_r)
+          inputs = tf.concat([prev_e, prev_r, upsamp_r], axis=-1) # we use the upsampled top down feedback, the previous error and r representation as inputs to the convlstm cell.
+      else:
+          inputs = tf.concat([prev_e, prev_r], axis=-1) # use only the previous error and r if we are at the top layer.
+  
+      # Update representation and cell states using the ConvLSTM2DCell
+      new_r, conv_lstm_states = self.convlstmcell(inputs, [prev_r, prev_c]) # we pass the r and c states expected by the ConvLSTM2DCell along with the input.
+      new_c = conv_lstm_states[1]
+  
+      return new_r, new_c #return the new new_r state to send as feedback downwards and new new_c state for use on the next time step.
 
-  def call(self, error_input, new_r, bottom=False):
-        ''' Bottom-up call. It implements the bottom-up update to compute the target (a), prediction (a_hat) and prediction error (new_e).
-        Takes as argument the error from the layer below (or the frame at the bottom layer) and the new_r representation computed in the top-down update.'''
+    def call(self, error_input, new_r, bottom=False):
+        """
+        Performs the bottom-up update to compute targets (a), predictions (a_hat), and prediction errors (new_e).
 
-        if bottom: # we take the frame as the target
-          a = error_input
-        else: # we conv_a + pool over the prediction error forwarded from the layer below to get out target.
-          a = self.conv_a(error_input)
-          a = self.pool_a(a)
+        Args:
+            error_input (Tensor): The error input from the layer below, or the input frame at the bottom layer.
+            new_r (Tensor): The representation computed in the top-down update.
+            bottom (bool): Flag indicating whether this is the bottom layer.
 
-        a_hat = self.conv_a_hat(new_r) # we use the new_r representation to compute our prediction (a_hat) of the target.
+        Returns:
+            Tensor: The new error computed, and optionally the frame prediction if this is the bottom layer.
+        """
+        # Compute the target using the error input
+        if bottom:
+            a = error_input  # Directly use the input frame as the target at the bottom layer
+        else:
+            a = self.conv_a(error_input) # Apply convolutions and pooling to the error input
+            a = self.pool_a(a)  
 
-        if bottom: # We apply clipping to set the at maximum pixel value (1)
-          a_hat = tf.minimum(1.0, a_hat)
+        # Compute the prediction using the new representation state
+        a_hat = self.conv_a_hat(new_r)
+        if bottom:
+            a_hat = tf.minimum(1.0, a_hat)  # Clip predictions to a maximum of 1
 
-        #compute the positive error
+        # Compute positive and negative prediction errors
         pos_error = self.substract([a, a_hat])
         pos_error = self.relu(pos_error)
 
-        #compute the negative error
         neg_error = self.substract([a_hat, a])
         neg_error = self.relu(neg_error)
-
         new_e = tf.concat([pos_error, neg_error], axis=-1) #Concatenate them along the feature dimension to get the error response.
 
-        if bottom: # we output the frame prediction as well
-          frame_prediction = a_hat
-          return new_e, frame_prediction
+        # Optionally return the frame prediction at the bottom layer
+        if bottom:
+            return new_e, a_hat
 
         return new_e # propagate error response foward to be used by the layer above
-    
-  def get_config(self):
-        config = { 
+
+    def get_config(self):
+        """
+        Returns the configuration of the PredNet_Cell for Keras model serialization.
+        """
+        config = {
           'stack_size': self.stack_size,
           'R_stack_size': self.R_stack_size,
           'A_filt_size': self.A_filt_size,
@@ -114,155 +141,195 @@ class PredNet_Cell(layers.Layer):
         base_config = super().get_config() # Include standard layer attributes
     
         return dict(list(base_config.items()) + list(config.items()))
-  
-  @classmethod
-  def from_config(cls, config):
+
+    @classmethod
+    def from_config(cls, config):
+        """
+        Creates an instance of PredNet_Cell from a configuration dictionary.
+        """
         return cls(**config)
+
 
 @tf.keras.saving.register_keras_serializable(package="StackedRNNCells")
 class StackPredNet(layers.StackedRNNCells):
-    ''' Base Class for stacking PredNet Cells.
-    Takes as input a list of PredNet_Cells and stacks them to handle their correct hierarchical interaction on every step of the sequence'''
+    """
+    A class that handles the stacking of PredNet Cells. It orchestrates the hierarchical interactions
+    between different layers in a PredNet architecture during sequence processing.
+
+    Extends:
+        layers.StackedRNNCells: A class that can stack multiple RNN cells.
+
+    Initialization:
+        cells (list of PredNet_Cell): The PredNet cells to be stacked.
+    """
+
     def __init__(self, **kwargs):
         super(StackPredNet, self).__init__(**kwargs)
-
-        self.nb_layers = len(self.cells)
+        self.nb_layers = len(self.cells)  # Store the number of layers
 
     def build(self, input_shape):
-      ''' RNN class requires that the build method of the cell must define.
-      Takes as input the shape of a frame. From it we build each component of the cells by modifying it to match their expected inputs from based on their hierarchical position'''
+        """
+        Build each component of the cells based on their position in the hierarchy.
 
-      # get the height and width dimensions
-      nb_row = input_shape[1]
-      nb_col = input_shape[2]
+        Args:
+            input_shape (tuple): The shape of the input frame.
 
-      for layer_index, cell in enumerate(self.cells): # iterate through each PredNetCell
-        ds_factor = 2 ** layer_index # Adapt Input Shape based on hierarchical position
+        Explanation:
+            This method adjusts the input shape for each layer based on its depth in the stack,
+            taking into account the downsampling factor and the specific needs for convolutional and LSTM components.
+        """
+        # Extract spatial dimensions from input shape
+        nb_row = input_shape[1]
+        nb_col = input_shape[2] 
 
-        if layer_index > 0: #build conv_a for non bottom layer, get the right feature dimension by multiplying from the the stack_size from the layer below.
-          cell.conv_a.build((input_shape[0], nb_row // ds_factor, nb_col // ds_factor, 2 * self.cells[layer_index -1].stack_size))
+        for layer_index, cell in enumerate(self.cells):
+            ds_factor = 2 ** layer_index  # Calculate downsampling factor for this layer
 
-        cell.conv_a_hat.build((input_shape[0], nb_row // ds_factor, nb_col // ds_factor, cell.R_stack_size)) # build conv_a_hat
+            if layer_index > 0:  # Adjust the input shape and build the conv_a for non-bottom layers
+                cell.conv_a.build((input_shape[0], nb_row // ds_factor, nb_col // ds_factor, 2 * self.cells[layer_index - 1].stack_size))
 
-        if layer_index < self.nb_layers - 1: # if not at the top, build convlstmcell accounting for top-down feedback
-          cell.convlstmcell.build((input_shape[0], nb_row // ds_factor, nb_col // ds_factor, cell.stack_size * 2 + cell.R_stack_size + self.cells[layer_index+1].R_stack_size))
+            # Build the conv_a_hat using the representation size
+            cell.conv_a_hat.build((input_shape[0], nb_row // ds_factor, nb_col // ds_factor, cell.R_stack_size))
 
-        else: #build convlstmcell without top down feedback.
-          cell.convlstmcell.build((input_shape[0], nb_row // ds_factor, nb_col // ds_factor, cell.stack_size * 2 + cell.R_stack_size))
+            # Adjust the input shape and build the ConvLSTM2DCell for each layer considering top-down feedback
+            if layer_index < self.nb_layers - 1:
+                cell.convlstmcell.build((input_shape[0], nb_row // ds_factor, nb_col // ds_factor, cell.stack_size * 2 + cell.R_stack_size + self.cells[layer_index + 1].R_stack_size))
+            else:  # For the top layer, there is no top-down feedback
+                cell.convlstmcell.build((input_shape[0], nb_row // ds_factor, nb_col // ds_factor, cell.stack_size * 2 + cell.R_stack_size))
 
-        cell.built = True # set cell to built
+            cell.built = True  # Mark the cell as built
 
-      self.built = True #set the stack to built
-
+        self.built = True  # Mark the stack as built
 
     def get_initial_state(self, inputs):
-      ''' Takes as input the entire sequence and returns the initial set of zero initilazied states require to begin iterating.'''
+        """
+        Generates the initial set of zero-initialized states for the sequence processing.
 
-      input_shape = inputs.shape
-      # get the height and width dimensions
-      init_nb_row = input_shape[2]
-      init_nb_col = input_shape[3]
+        Args:
+            inputs (Tensor): The input tensor containing the entire sequence.
 
-      base_initial_state = K.zeros_like(inputs)
+        Returns:
+            list: The initial states for each cell in the stack.
+        """
+        input_shape = inputs.shape
+        # Get height and width dimensions
+        init_nb_row = input_shape[2]
+        init_nb_col = input_shape[3]
 
-      non_channel_axis =  -2
+        base_initial_state = K.zeros_like(inputs)  # Start with a base state of zeros
 
-      for _ in range(2):
-          base_initial_state = K.sum(base_initial_state, axis=non_channel_axis)
+        non_channel_axis =  -2
 
-      base_initial_state = K.sum(base_initial_state, axis=1) #should have shape (samples, nb_channels)
+        # Reduce across spatial dimensions to get a base state with the shape (samples, nb_channels)
+        for _ in range(2):
+            base_initial_state = K.sum(base_initial_state, axis=non_channel_axis)
 
-      initial_states = [[], [], []]  # initialize empty lists for 'r', 'c', and 'e' states
-      states_to_pass = ['r', 'c', 'e'] # to iterate over
+        base_initial_state = K.sum(base_initial_state, axis=1)  # Sum over time dimension
 
-      for i, cell in enumerate(self.cells):
-          layer_index = i
-          for state_type_index, state_type in enumerate(states_to_pass):
-              nb_row = init_nb_row // (2 ** layer_index)
-              nb_col = init_nb_col // (2 ** layer_index)
+        initial_states = [[], [], []]  # Initialize lists for 'r', 'c', 'e' states
+        states_to_pass = ['r', 'c', 'e']  # Define the types of states
 
-              if state_type in ['r', 'c']:
-                  stack_size = self.cells[layer_index].R_stack_size
-              else:  # state_type == 'e'
-                  stack_size = 2 * self.cells[layer_index].stack_size
+        for i, cell in enumerate(self.cells):
+            layer_index = i
+            for state_type_index, state_type in enumerate(states_to_pass):
+                nb_row = init_nb_row // (2 ** layer_index)
+                nb_col = init_nb_col // (2 ** layer_index)
 
-              output_size = stack_size * nb_row * nb_col
-              reducer = tf.zeros((input_shape[-1], output_size))
-              initial_state = K.dot(base_initial_state, reducer)
-              output_shp = (-1, nb_row, nb_col, stack_size)
-              initial_state = K.reshape(initial_state, output_shp)
-              initial_states[state_type_index].append(initial_state)
+                # Determine the size of the state based on the cell's configuration
+                if state_type in ['r', 'c']:
+                    stack_size = self.cells[layer_index].R_stack_size
+                else:  # 'e' state
+                    stack_size = 2 * self.cells[layer_index].stack_size
 
-      return initial_states
+                # Prepare initial state tensor for this state type
+                output_size = stack_size * nb_row * nb_col
+                reducer = tf.zeros((input_shape[-1], output_size))
+                initial_state = K.dot(base_initial_state, reducer)
+                output_shp = (-1, nb_row, nb_col, stack_size)
+                initial_state = K.reshape(initial_state, output_shp)
+                initial_states[state_type_index].append(initial_state)
+
+        return initial_states
+
 
     @property
     def state_size(self):
-      ''' returns a list of the state sizes of each layer '''
-      r_state_sizes = []
-      c_state_sizes = []
-      e_state_sizes = []
-
-      for c in self.cells:
-          r, c, e = c.state_size
-          r_state_sizes.append(r)
-          c_state_sizes.append(c)
-          e_state_sizes.append(e)
-
-      return [r_state_sizes, c_state_sizes, e_state_sizes]
-
-    def call(self, input, states, training = False):
-        ''' Equivalent to the step function in the original implementation. Handles the top-down and bottom-up dynamics across cells/layers of the PredNet'''
-        # We disentangle the states
+        """
+        Returns the state sizes for each of the layers in the stack, organized by state type (r, c, e).
+        This helps in preparing and initializing the states when the network is executed.
+    
+        Returns:
+            list: A list containing three lists, one for each state type (r, c, e), each containing the state sizes for the corresponding layer.
+        """
+        r_state_sizes, c_state_sizes, e_state_sizes = [], [], []
+    
+        for cell in self.cells:
+            r, c, e = cell.state_size
+            r_state_sizes.append(r)
+            c_state_sizes.append(c)
+            e_state_sizes.append(e)
+    
+        return [r_state_sizes, c_state_sizes, e_state_sizes]
+    
+    def call(self, inputs, states, training=False):
+        """
+        Process input through the stacked PredNet cells, handling both top-down and bottom-up dynamics.
+    
+        Args:
+            inputs (Tensor): The input tensor at the current timestep.
+            states (list): The states from the previous timestep.
+            training (bool): Flag to determine whether the network is in training mode or inference mode.
+    
+        Returns:
+            tuple: Contains the output (either the prediction error during training or the predicted frame during inference) and the new states.
+        """
+        # Disentangle the states into separate lists for each state type
         prev_r_states = states[0]
         prev_c_states = states[1]
         prev_e_states = states[2]
-
-        current_input = input # set the current input to be the frame
-
-        #initialize list for the new states to be computed
-        new_r_states = []
-        new_c_states = []
-        new_e_states = []
-
-        all_error = None # Variable for tranining.
-
-        #top down pass using the custom top_down call of each cell. We iterate in reverse and calculate the new new_r and new_c states:
+    
+        current_input = inputs # Set the current input to be the frame
+        # Initialize list for the new states to be computed
+        new_r_states, new_c_states, new_e_states = [], [], []
+    
+        all_error = None  # Variable for training error accumulation
+    
+        # Top-down pass: Update states from top to bottom. We iterate in reverse and calculate the new new_r and new_c states
         for l, cell in reversed(list(enumerate(self.cells))):
-          layer_states = [prev_r_states[l], prev_c_states[l], prev_e_states[l]]
+            layer_states = [prev_r_states[l], prev_c_states[l], prev_e_states[l]]
 
-          if l == self.nb_layers - 1:
-            new_r, new_c = cell.top_down(layer_states, top_r=None) # pass None as feedback if we are at the top layer.
-          else:
-            new_r, new_c = cell.top_down(layer_states, top_r = new_r) # pass the new_r just calculated for the layer above as top down feedback.
+            if l == self.nb_layers - 1:
+              new_r, new_c = cell.top_down(layer_states, top_r=None) # pass None as feedback if we are at the top layer.
+            else:
+              new_r, new_c = cell.top_down(layer_states, top_r = new_r) # pass the new_r just calculated for the layer above as top down feedback.
 
-          #insert states on the list rather than appending to not get a reversed list.
-          new_r_states.insert(0, new_r)
-          new_c_states.insert(0, new_c)
-
-        #bottom_up pass, we iterate normarly calling every cell with the current input and the just calculated new_r representation corresponding to that layer.
+            #insert states on the list rather than appending to not get a reversed list.
+            new_r_states.insert(0, new_r)
+            new_c_states.insert(0, new_c)
+    
+        # Bottom-up pass: Process errors and update states.
         for l, cell in enumerate(self.cells):
-          new_r = new_r_states[l]
-          if l == 0:  # Bottom layer
-            error, frame_prediction = cell(current_input, new_r, bottom=True)
-          else:
-            error = cell(current_input, new_r)
-
-          current_input = error #pass the error just computed forward as the input to the next layer.
-
-          new_e_states.append(error)
-          
-          if training: # compute layer error and add to all_error
-            layer_error = tf.reduce_mean(tf.keras.layers.Flatten()(error), axis=-1, keepdims=True)
-            all_error = layer_error if l == 0 else tf.concat((all_error, layer_error), axis=-1) # add the layer_error to the all_error output for traning.
-
-        new_states_per_layer = [new_r_states, new_c_states, new_e_states] # Make a list of the new states for the next time step
-
-        if training:
-           output = all_error # during traning we output all error to train on reducing error to 0
-        else:
-           output = frame_prediction # for inference we output the frame prediction.
-
+            new_r = new_r_states[l]
+            if l == 0:  # Bottom layer processes input frame directly
+                error, frame_prediction = cell(current_input, new_r, bottom=True)
+            else:
+                error = cell(current_input, new_r)
+    
+            current_input = error  # Pass the error up to the next layer
+            new_e_states.append(error)
+    
+            if training:  # Accumulate errors for training
+                layer_error = tf.reduce_mean(tf.keras.layers.Flatten()(error), axis=-1, keepdims=True)
+                all_error = layer_error if l == 0 else tf.concat((all_error, layer_error), axis=-1)
+    
+        # Collect new states for each layer for next time step
+        new_states_per_layer = [new_r_states, new_c_states, new_e_states]
+    
+        # Decide output based on the mode (training vs. inference)
+        output = all_error if training else frame_prediction
+    
         return output, new_states_per_layer
+
       
 @tf.keras.saving.register_keras_serializable(package="PredNet")
 class PredNet(RNN):
@@ -388,8 +455,24 @@ class PredNet(RNN):
                unroll=False,
                output_mode = 'error',
                **kwargs):
+    """
+    Initializes the PredNet model with a stack of PredNet cells.
 
-    if isinstance(cell, (list, tuple)): # stack PredNet_Cells using StackPredNet
+    Args:
+        cell (list of PredNet_Cell): A list of PredNet-like cells or a single cell.
+        return_sequences (bool): Whether to return the full sequence of outputs or just the last output.
+        return_state (bool): Whether to return the last state in addition to the output.
+        go_backwards (bool): Whether to process the input sequence backwards.
+        stateful (bool): Whether the states in the network should be maintained across batches.
+        unroll (bool): Whether the network should unroll the RNN loops.
+        output_mode (str): Output mode of the network, could be 'error', 'prediction', or 'all'.
+        **kwargs: Additional keyword arguments for the RNN layer.
+
+    Note:
+        If `cell` is a list of PredNet cells, it is converted into a `StackPredNet` for hierarchical processing.
+    """
+
+    if isinstance(cell, (list, tuple)): # If cells are provided as a list, stack them using StackPredNet
       cell = StackPredNet(cells = cell)
 
     super(PredNet, self).__init__(cell,
@@ -407,15 +490,26 @@ class PredNet(RNN):
 
   @tf_utils.shape_type_conversion
   def compute_output_shape(self, input_shape):
-    ''' Assumes traning (error) mode, based on the authors original code'''
+    """
+    Computes the output shape of the network based on the input shape and the mode of operation.
+
+    Args:
+        input_shape (tuple): Shape of the input batch (including the batch size).
+
+    Returns:
+        tuple: The shape of the output which varies based on `output_mode` and other configurations.
+
+    Note:
+        Assumes training (error) mode, based on the authors' original code. It modifies the output shape based on the selected `output_mode`.
+    """
     if isinstance(input_shape, list):
-      input_shape = input_shape[0]
+      input_shape = input_shape[0] # Handle nested input shapes
 
     cell = self.cell
     if self.output_mode == 'prediction':
         out_shape = input_shape[2:]
     elif self.output_mode == 'error':
-        out_shape = (cell.nb_layers,)
+        out_shape = (cell.nb_layers,) # Output one error per layer
     elif self.output_mode == 'all':
         out_shape = (np.prod(input_shape[2:]) + cell.nb_layers,)
 
@@ -427,8 +521,19 @@ class PredNet(RNN):
 
   @tf_utils.shape_type_conversion
   def build(self, input_shape):
+    """
+    Builds the PredNet architecture by initializing layers based on the input shape.
+
+    Args:
+        input_shape (tuple or list): Shape of the input or list of shapes if initial states and constants are provided.
+
+    Note:
+        Adjusts the `input_spec` to account for the batch size if `stateful` is True and ensures that all cell states are properly initialized.
+    """
     # Note input_shape will be list of shapes of initial states and
     # constants if these are passed in __call__.
+
+    # Handle the presence of constants in the input
     if self._num_constants is not None:
       constants_shape = input_shape[-self._num_constants:]  # pylint: disable=E1130
     else:
@@ -475,7 +580,15 @@ class PredNet(RNN):
     self.built = True
 
   def get_initial_state(self, inputs):
-    '''Changed to simply use the get_initial_state function from the StackPredNet class'''
+    """
+    Utilizes the StackPredNet's method to obtain initial states for the network.
+
+    Args:
+        inputs (Tensor): The initial inputs to the network, used to determine the shape of the initial states.
+
+    Returns:
+        list of Tensors: The initial states for the network's cells.
+    """
     initial_state = self.cell.get_initial_state(inputs)
     return initial_state
 
