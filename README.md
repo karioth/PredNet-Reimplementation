@@ -1,9 +1,10 @@
 # PredNet Implementation in TensorFlow
 This repository hosts a modern TensorFlow implementation of the PredNet architecture, originally proposed for next-frame video prediction. Our implementation enhances the modular and reusable aspects of PredNet using TensorFlow's latest features, making it suitable for both research and application development. Additionally, we provide a direct comparison with the original PredNet model and include a custom data pipeline for handling video data, particularly from the KITTI dataset.
 ## Repository Structure
-* '**PredNet.py**' - Contains the modular TensorFlow/Keras implementation of the PredNet model.
-* '**model.py**' - Hosts the '**PredNetModel**', a high-level model class for integrating the PredNet cells into a trainable model
 * '**datapipeline_tf_kitti'** - A directory containing the TensorFlow data pipeline setup for processing raw picture data into a format suitable for PredNet training.
+* '**data_utils.py**' - Contains utilities for generating, visualizing, and evaluating sequences of data for the PredNet model.
+* '**model.py**' - Hosts the '**PredNetModel**', a high-level model class for integrating the PredNet cells into a trainable model.
+* '**PredNet.py**' - Contains the modular TensorFlow/Keras implementation of the PredNet model.
 * '**original_prednet.py**' - The original PredNet implementation as provided in the [PredNet paper](https://coxlab.github.io/prednet/).
 * '**PredNet_Comparison.ipynb**' - A Jupyter notebook hosted on Google Colab that demonstrates the use of the new modular PredNet, comparing its performance and functionality against the original implementation.
 
