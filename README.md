@@ -32,7 +32,13 @@ cd PredNet_tf
     
 ### Data Preparation
 Use the scripts in '**datapipeline_tf_kitti**' (see '**testing_kitti_tf_data.ipynb**' as an example) to process your video data. These scripts will format the data correctly for training with the PredNet model.
+
+#### Dataset Requirements
+
+##### Image Size Constraints
+
+When training the PredNet model on a new dataset, it is crucial to ensure that the dimensions of your input images are compatible with the model's architecture. Specifically, each dimension (width and height) of the images must be divisible by `2^(number of layers - 1)`. This constraint arises due to the cyclical 2x2 max-pooling and upsampling operations used within the network.
+
     
 ### Modifying the Model
 To adjust the model architecture or training process, modify the '**PredNetModel**' class in '**model.py**'. For custom data inputs or formats, update the data pipeline scripts in the '**datapipeline_tf_kitti**' directory.
-
