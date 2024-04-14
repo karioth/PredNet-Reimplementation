@@ -16,7 +16,7 @@ This repository hosts a modern TensorFlow implementation of the PredNet architec
 ## Usage
 
 ### Running in Google Colab
-Since the code is primarily written and tested in Google Colab, open the provided PredNet_Comparison.ipynb notebook and follow the steps there. This method ensures that all dependencies and the environment are correctly configured for immediate use.
+Since the code is primarily written and tested in Google Colab, open the provided '**PredNet_Comparison.ipynb**' notebook and follow the steps there. This method ensures that all dependencies and the environment are correctly configured for immediate use.
 ### Running Locally
 If you prefer to run the code locally:
 
