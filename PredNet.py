@@ -320,6 +320,7 @@ class StackPredNet(layers.StackedRNNCells):
     
             if training:  # Accumulate errors for training
                 layer_error = tf.reduce_mean(tf.keras.layers.Flatten()(error), axis=-1, keepdims=True)
+                print('layer', l, 'error', layer_error)
                 all_error = layer_error if l == 0 else tf.concat((all_error, layer_error), axis=-1)
     
         # Collect new states for each layer for next time step
