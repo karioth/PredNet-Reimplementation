@@ -637,8 +637,8 @@ class PredNet(Recurrent):
             else:
                 for l in range(self.nb_layers):
                     layer_error = K.mean(K.batch_flatten(e[l]), axis=-1, keepdims=True)
+                    print('layer', l, 'error', layer_error)
                     all_error = layer_error if l == 0 else K.concatenate((all_error, layer_error), axis=-1)
-                    #print('layer', l, 'error', layer_error)
                 if self.output_mode == 'error':
                     output = all_error
                 else:
